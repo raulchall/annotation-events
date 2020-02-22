@@ -1,0 +1,15 @@
+.vs/
+.vscode/
+.idea/
+bin/
+obj/
+*.sln
+
+*.user
+envvars
+envvars-*
+localdev-*
+
+node_modules
+node_modules/
+*.patch
