@@ -14,6 +14,10 @@ curl -X PUT "http://system-events-elasticsearch:9200/sysevents" -H 'Content-Type
           "type": "date",
           "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm:ss.SSS||'"$DATE_FORMAT"'||epoch_millis||epoch_second"
         },
+        "endtime": {
+          "type": "date",
+          "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm:ss.SSS||'"$DATE_FORMAT"'||epoch_millis||epoch_second"
+        },
         "category": { 
           "type": "text",
           "fields": {
@@ -41,9 +45,4 @@ curl -X PUT "http://system-events-elasticsearch:9200/sysevents" -H 'Content-Type
       }
     }
   }
-}'
-
-curl -X PUT "http://system-events-elasticsearch:9200/sysevents/_doc/1" -H 'Content-Type: application/json' -d'
-{
-  
 }'

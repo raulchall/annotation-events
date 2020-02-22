@@ -4,10 +4,10 @@ namespace SystemEvents.Enums
 {
     public enum Level
     {
-        [EnumMember( Value = "critical" )]
-        Critical,
-
         [EnumMember( Value = "information" )]
-        Information
+        Information = 0,
+
+        [EnumMember( Value = "critical" )]
+        Critical = 1
     }
 }
