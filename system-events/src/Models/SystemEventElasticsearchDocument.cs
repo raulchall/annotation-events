@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace SystemEvents.Models
 {
-    public class SystemEventElasticsearhDocument
+    public class SystemEventElasticsearchDocument
     {
         [JsonProperty("category")]
         public string Category { get;set; }
@@ -33,7 +33,7 @@ namespace SystemEvents.Models
         public string Endtime { get;set; }
     }
 
-    public class SystemEventElasticsearhPartialDocument 
+    public class SystemEventElasticsearchPartialDocument 
     {
         [JsonProperty("endtime")]
         public string Endtime { get;set; }

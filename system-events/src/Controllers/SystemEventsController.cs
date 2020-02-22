@@ -16,13 +16,13 @@ namespace SystemEvents.Controllers
     public class SystemEventsController : ControllerBase
     {
         private readonly ILogger<SystemEventsController> _logger;
-        private readonly IElasticClient _esClient;
+        private readonly IMonitoredElasticsearchClient _esClient;
         private readonly IElasticsearchTimeStampFactory _timeStampFactory;
         private readonly IElasticsearchClientConfiguration _esClientConfiguration;
 
         public SystemEventsController(
             ILogger<SystemEventsController> logger,
-            IElasticClient esClient,
+            IMonitoredElasticsearchClient esClient,
             IElasticsearchTimeStampFactory timeStampFactory,
             IElasticsearchClientConfiguration esClientConfiguration)
         {
@@ -103,11 +103,11 @@ namespace SystemEvents.Controllers
                 return BadRequest($"{nameof(eventId)} can not be null or whitespace");
             }
 
-            var response = await _esClient.UpdateAsync<SystemEventElasticsearhDocument, SystemEventElasticsearhPartialDocument>(
-                        eventId, u => u
-                        .Index(_esClientConfiguration.DefaultIndex)
-                        .Doc(new SystemEventElasticsearhPartialDocument { Endtime = _timeStampFactory.GetTimestamp()})
-                        .RetryOnConflict(3), cancellationToken: cancellationToken);
+            var response = await _esClient.UpdateAsync(
+                        eventId, 
+                        _esClientConfiguration.DefaultIndex, 
+                        new SystemEventElasticsearchPartialDocument { Endtime = _timeStampFactory.GetTimestamp()},
+                        cancellationToken: cancellationToken);
 
             if (!response.IsValid)
             {
@@ -132,7 +132,7 @@ namespace SystemEvents.Controllers
             var remoteIpAddress = HttpContext.Connection.RemoteIpAddress;
             var eventTimestamp = _timeStampFactory.GetTimestamp();
 
-            var systemEvent = new SystemEventElasticsearhDocument
+            var systemEvent = new SystemEventElasticsearchDocument
             {
                 Category = model.Category,
                 Level = model.Level.ToString(),

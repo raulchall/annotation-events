@@ -56,6 +56,17 @@ services:
       - system-events
     depends_on:
       - elasticsearch
+  
+  prometheus:
+    image: prom/prometheus:v2.15.2
+    container_name: system-events-prometheus
+    ports: 
+      - "9090"
+      - "9091"
+    volumes:
+      - ./prometheus:/etc/prometheus
+    networks:
+      - system-events
 
 networks:
   system-events:

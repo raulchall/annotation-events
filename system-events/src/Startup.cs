@@ -8,6 +8,7 @@ using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
+using Prometheus;
 using SystemEvents.Configuration;
 using SystemEvents.ServiceExtensions;
 using SystemEvents.Utils;
@@ -46,11 +47,14 @@ namespace SystemEvents
 
             app.UseRouting();
 
+            app.UseHttpMetrics();
+
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapMetrics();
             });
         }
 
@@ -65,6 +69,7 @@ namespace SystemEvents
 
             services.AddSingleton<IElasticsearchTimeStampFactory, ElasticsearchTimeStampFactory>();
             services.AddElasticsearch(configuration);
+            services.AddSingleton<IMonitoredElasticsearchClient, PrometheusMonitoredElasticsearchClient>();
 
             services.AddControllers()
                     .AddNewtonsoftJson(

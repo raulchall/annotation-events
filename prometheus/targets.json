@@ -1,0 +1,10 @@
+[
+    {
+        "targets": [
+            "system-events"
+        ],
+        "labels": {
+            "service": "system-events"
+        }
+    }
+]

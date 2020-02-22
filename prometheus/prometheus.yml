@@ -1,0 +1,20 @@
+global:
+
+    scrape_interval: 15s
+  
+    scrape_timeout: 10s
+  
+    evaluation_interval: 30s
+  
+scrape_configs:
+  - job_name: 'services'
+
+    scrape_interval: 15s
+    metrics_path: /metrics
+    params:
+      format: ['prometheus']
+
+    file_sd_configs:
+      - files:
+        - targets.json
+  
