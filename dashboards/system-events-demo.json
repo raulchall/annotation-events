@@ -32,7 +32,7 @@
         "hide": true,
         "iconColor": "rgba(255, 96, 96, 1)",
         "name": "Critical System Events",
-        "query": "category:\"$sysevents_category\" AND level:\"critical\"",
+        "query": "level:\"critical\"",
         "showIn": 0,
         "tagsField": "tags",
         "textField": "message",
@@ -45,7 +45,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1582397111020,
+  "iteration": 1582438210891,
   "links": [],
   "panels": [
     {
@@ -215,7 +215,7 @@
               "type": "logs"
             }
           ],
-          "query": "category:\"$sysevents_category\" AND level:\"critical\"",
+          "query": "level:\"critical\"",
           "refId": "A",
           "timeField": "timestamp"
         }
@@ -226,6 +226,7 @@
       "type": "logs"
     }
   ],
+  "refresh": false,
   "schemaVersion": 22,
   "style": "dark",
   "tags": [],
@@ -252,10 +253,10 @@
       {
         "allValue": null,
         "current": {
-          "tags": [],
-          "text": "Networking Maintenance",
+          "text": "Network Maintenance + Service Deployment",
           "value": [
-            "Networking Maintenance"
+            "Network Maintenance",
+            "Service Deployment"
           ]
         },
         "datasource": "$sysevents_ds",
@@ -300,5 +301,5 @@
   "timezone": "",
   "title": "System Events Demo Dashboard",
   "uid": "c2IXl8wWk",
-  "version": 17
+  "version": 20
 }

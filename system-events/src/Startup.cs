@@ -75,11 +75,14 @@ namespace SystemEvents
             services.AddSingleton<IMonitoredElasticsearchClient, PrometheusMonitoredElasticsearchClient>();
 
             // Inject Notification Channel Clients
-            services.AddHttpClient<SlackService>();
-            services.AddDefaultAWSOptions(Configuration.GetAWSOptions());
-            services.AddAWSService<IAmazonSimpleNotificationService>();
-            services.AddSingleton<IMonitoredAmazonSimpleNotificationService, MonitoredAmazonSimpleNotificationService>();
-            services.AddSingleton<ICategorySubscriptionNotifier, CategorySubscriptionNotifier>();
+            if (!string.IsNullOrWhiteSpace(configuration.AdvanceConfigurationPath))
+            {
+                services.AddHttpClient<SlackService>();
+                services.AddDefaultAWSOptions(Configuration.GetAWSOptions());
+                services.AddAWSService<IAmazonSimpleNotificationService>();
+                services.AddSingleton<IMonitoredAmazonSimpleNotificationService, MonitoredAmazonSimpleNotificationService>();
+                services.AddSingleton<ICategorySubscriptionNotifier, CategorySubscriptionNotifier>();
+            }
 
             services.AddControllers()
                     .AddNewtonsoftJson(

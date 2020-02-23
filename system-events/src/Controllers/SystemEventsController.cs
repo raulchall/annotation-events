@@ -28,15 +28,15 @@ namespace SystemEvents.Controllers
             IMonitoredElasticsearchClient esClient,
             IElasticsearchTimeStampFactory timeStampFactory,
             IElasticsearchClientConfiguration esClientConfiguration,
-            ICategorySubscriptionNotifier categorySubscriptionNotifier,
-            IAdvanceConfiguration advanceConfiguration)
+            IAdvanceConfiguration advanceConfiguration,
+            ICategorySubscriptionNotifier categorySubscriptionNotifier = null)
         {
             _logger                       = logger ?? throw new ArgumentNullException(nameof(logger));
             _esClient                     = esClient ?? throw new ArgumentNullException(nameof(esClient));
             _timeStampFactory             = timeStampFactory ?? throw new ArgumentNullException(nameof(timeStampFactory));
             _esClientConfiguration        = esClientConfiguration ?? throw new ArgumentNullException(nameof(esClientConfiguration));
-            _categorySubscriptionNotifier = categorySubscriptionNotifier ?? throw new ArgumentNullException(nameof(categorySubscriptionNotifier));
             _advanceConfiguration         = advanceConfiguration ?? throw new ArgumentNullException(nameof(advanceConfiguration));
+            _categorySubscriptionNotifier = categorySubscriptionNotifier;
         }
 
         /// <summary>
@@ -60,6 +60,11 @@ namespace SystemEvents.Controllers
                 _logger.LogDebug(response.DebugInformation);
                 _logger.LogError(response.OriginalException, "System event was not created");
                 return BadRequest("System event was not created");
+            }
+
+            if (_categorySubscriptionNotifier == null)
+            {
+                return Ok();
             }
 
             // Notify about this event
@@ -99,6 +104,11 @@ namespace SystemEvents.Controllers
                 _logger.LogError(response.OriginalException, "System event was not created");
 
                 return BadRequest("Unable to start a system event");
+            }
+
+            if (_categorySubscriptionNotifier == null)
+            {
+                return Ok();
             }
 
             // Notify about this event
@@ -144,6 +154,11 @@ namespace SystemEvents.Controllers
                 _logger.LogError(response.OriginalException, "System event was not created");
 
                 return BadRequest("Unable to mark system event as concluded");
+            }
+
+            if (_categorySubscriptionNotifier == null)
+            {
+                return Ok();
             }
 
             // Notify about this event

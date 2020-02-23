@@ -1,7 +1,12 @@
+# Ideas
+- Add more notification channels (VictorOps, Pager Duty)
+
 # Unrealeased
 ## Added
 ## Changed
 
-# v0.0.1-alpha (02/17/2020)
+# v5.6.6-alpha (02/17/2020)
 ## Added
-- Initial release
+- Supports sending event to Elastic Search 5.x.x
+- Allows users subscribe using Slack or Amazon SNS to receive notifications of specific system events
+- Allows admins to restrict the allowed categories
