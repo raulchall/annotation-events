@@ -4,6 +4,20 @@ The System Events service is an http service that can proxy formatted annotation
 
 # How to use
 
+```
+{
+  "category": "Network Maintenance",
+  "targetKey": "traefik",
+  "level": "critical",
+  "message": "Upgrading node versions",
+  "sender": "rchall",
+  "tags": [
+    "maintenance", "networking-team"
+  ]
+}
+```
+
+
 ...
 
 # Supported Event Stores

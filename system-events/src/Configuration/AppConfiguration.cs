@@ -5,7 +5,7 @@ namespace SystemEvents.Configuration
 {
     public class AppConfiguration : IAppConfiguration, IElasticsearchClientConfiguration
     {
-        public string LogLevel => Environment.GetEnvironmentVariable("LogLevel");
+        public string AdvanceConfigurationPath => Environment.GetEnvironmentVariable("AdvanceConfigurationPath");
 
         public string UrlCsv => Environment.GetEnvironmentVariable("ELASTICSEARCH_URL_CSV");
 

@@ -8,6 +8,8 @@ namespace SystemEvents.Utils.Interfaces
 {
     public interface IMonitoredElasticsearchClient
     {
+        Task<SystemEventElasticsearchDocument> GetAsync(string documentId, CancellationToken cancellationToken);
+        
         Task<IIndexResponse> IndexAsync(SystemEventElasticsearchDocument document, CancellationToken cancellationToken);
         
         Task<IUpdateResponse<SystemEventElasticsearchDocument>> UpdateAsync(string documentId, string indexName, SystemEventElasticsearchPartialDocument partialDocument, CancellationToken cancellationToken, int retryOnConflict = 3);

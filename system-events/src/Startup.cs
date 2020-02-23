@@ -1,3 +1,4 @@
+using Amazon.SimpleNotificationService;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -11,6 +12,7 @@ using Newtonsoft.Json.Serialization;
 using Prometheus;
 using SystemEvents.Configuration;
 using SystemEvents.ServiceExtensions;
+using SystemEvents.Services;
 using SystemEvents.Utils;
 using SystemEvents.Utils.Interfaces;
 
@@ -66,10 +68,18 @@ namespace SystemEvents
             // Inject the configuration
             services.AddSingleton<IAppConfiguration>(provider => configuration);
             services.AddSingleton<IElasticsearchClientConfiguration>(provider => configuration);
+            services.AddAdvanceConfiguration(configuration);
 
             services.AddSingleton<IElasticsearchTimeStampFactory, ElasticsearchTimeStampFactory>();
             services.AddElasticsearch(configuration);
             services.AddSingleton<IMonitoredElasticsearchClient, PrometheusMonitoredElasticsearchClient>();
+
+            // Inject Notification Channel Clients
+            services.AddHttpClient<SlackService>();
+            services.AddDefaultAWSOptions(Configuration.GetAWSOptions());
+            services.AddAWSService<IAmazonSimpleNotificationService>();
+            services.AddSingleton<IMonitoredAmazonSimpleNotificationService, MonitoredAmazonSimpleNotificationService>();
+            services.AddSingleton<ICategorySubscriptionNotifier, CategorySubscriptionNotifier>();
 
             services.AddControllers()
                     .AddNewtonsoftJson(

@@ -1,0 +1,20 @@
+categories:
+  - name: Adhoc
+    description: Use it for unplanned events
+  - name: Database Migration
+    description: Database migration events
+  - name: Service Deployment
+    description: Service deployment events
+  - name: Network Maintenance
+    description: Network Maintenance events
+
+subscriptions:
+  - type: sns
+    category: Network Maintenance
+    topic_arn: arn:aws:sns:us-east-1:000000000000:system-event-network-maintenance
+  - type: sns
+    category: Database Migration
+    topic_arn: arn:aws:sns:us-east-1:000000000000:system-event-database-migration
+  - type: slack
+    category: Service Deployment
+    webhook_url: https://hooks.slack.com/services/Your/WebHook/Url

@@ -9,6 +9,7 @@ using Nest;
 using SystemEvents.Configuration;
 using SystemEvents.Utils.Interfaces;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SystemEvents.Controllers
 {
@@ -19,17 +20,23 @@ namespace SystemEvents.Controllers
         private readonly IMonitoredElasticsearchClient _esClient;
         private readonly IElasticsearchTimeStampFactory _timeStampFactory;
         private readonly IElasticsearchClientConfiguration _esClientConfiguration;
+        private readonly ICategorySubscriptionNotifier _categorySubscriptionNotifier;
+        private readonly IAdvanceConfiguration _advanceConfiguration;
 
         public SystemEventsController(
             ILogger<SystemEventsController> logger,
             IMonitoredElasticsearchClient esClient,
             IElasticsearchTimeStampFactory timeStampFactory,
-            IElasticsearchClientConfiguration esClientConfiguration)
+            IElasticsearchClientConfiguration esClientConfiguration,
+            ICategorySubscriptionNotifier categorySubscriptionNotifier,
+            IAdvanceConfiguration advanceConfiguration)
         {
-            _logger                = logger ?? throw new ArgumentNullException(nameof(logger));
-            _esClient              = esClient ?? throw new ArgumentNullException(nameof(esClient));
-            _timeStampFactory      = timeStampFactory ?? throw new ArgumentNullException(nameof(timeStampFactory));
-            _esClientConfiguration = esClientConfiguration ?? throw new ArgumentNullException(nameof(esClientConfiguration));
+            _logger                       = logger ?? throw new ArgumentNullException(nameof(logger));
+            _esClient                     = esClient ?? throw new ArgumentNullException(nameof(esClient));
+            _timeStampFactory             = timeStampFactory ?? throw new ArgumentNullException(nameof(timeStampFactory));
+            _esClientConfiguration        = esClientConfiguration ?? throw new ArgumentNullException(nameof(esClientConfiguration));
+            _categorySubscriptionNotifier = categorySubscriptionNotifier ?? throw new ArgumentNullException(nameof(categorySubscriptionNotifier));
+            _advanceConfiguration         = advanceConfiguration ?? throw new ArgumentNullException(nameof(advanceConfiguration));
         }
 
         /// <summary>
@@ -53,6 +60,17 @@ namespace SystemEvents.Controllers
                 _logger.LogDebug(response.DebugInformation);
                 _logger.LogError(response.OriginalException, "System event was not created");
                 return BadRequest("System event was not created");
+            }
+
+            // Notify about this event
+            try
+            {
+                var document = await _esClient.GetAsync(response.Id, cancellationToken);
+                await _categorySubscriptionNotifier.OnEventCreated(model.Category, document, cancellationToken);
+            }
+            catch
+            {
+                // Ignore failure to send notification about system event
             }
 
             return Ok();
@@ -81,6 +99,17 @@ namespace SystemEvents.Controllers
                 _logger.LogError(response.OriginalException, "System event was not created");
 
                 return BadRequest("Unable to start a system event");
+            }
+
+            // Notify about this event
+            try
+            {
+                var document = await _esClient.GetAsync(response.Id, cancellationToken);
+                await _categorySubscriptionNotifier.OnEventStarted(model.Category, document, cancellationToken);
+            }
+            catch
+            {
+                // Ignore failure to send notification about system event
             }
 
             return Ok(new StartEventResponse{
@@ -115,6 +144,17 @@ namespace SystemEvents.Controllers
                 _logger.LogError(response.OriginalException, "System event was not created");
 
                 return BadRequest("Unable to mark system event as concluded");
+            }
+
+            // Notify about this event
+            try
+            {
+                var document = await _esClient.GetAsync(response.Id, cancellationToken);
+                await _categorySubscriptionNotifier.OnEventFinished(document.Category, document, cancellationToken);
+            }
+            catch
+            {
+                // Ignore failure to send notification about system event
             }
 
             return Ok();
@@ -177,6 +217,21 @@ namespace SystemEvents.Controllers
             if (string.IsNullOrWhiteSpace(model.Sender))
             {
                 reason = $"{nameof(model.Sender)} can not be null or whitespace";
+                return false;
+            }
+
+            model.Category = model.Category.Trim();
+            model.TargetKey = model.TargetKey.Trim();
+            model.Sender = model.Sender.Trim();
+
+            // If Advance Configuration is enabled then only specified categories 
+            // from the configuration can be used
+            if (_advanceConfiguration.Categories!= null 
+                    && !_advanceConfiguration.Categories.Any(c => c.Name == model.Category))
+            {
+                reason = $"The provided category `{model.Category}` is not allowed. Check" + 
+                        "/category/all for a list of allowed categories or contact your system administrator.";
+
                 return false;
             }
             
