@@ -3,10 +3,12 @@ categories:
     description: Use it for unplanned events
   - name: Database Migration
     description: Database migration events
+    level: critical
   - name: Service Deployment
     description: Service deployment events
   - name: Network Maintenance
     description: Network Maintenance events
+    level: critical
 
 subscriptions:
   - type: sns

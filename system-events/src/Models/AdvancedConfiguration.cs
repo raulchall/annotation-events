@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SystemEvents.Enums;
 
 namespace SystemEvents.Models
 {
@@ -16,8 +17,9 @@ namespace SystemEvents.Models
 
     public class Category
     {
-        public string Name { get;set; }
-        public string Description { get;set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public Level? Level { get; set; }
     }
 
     public class CategorySubscription

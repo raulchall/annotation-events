@@ -1,6 +1,6 @@
 namespace SystemEvents.Models
 {
-    public class StartEventResponse
+    public class EventResponse
     {
         public string EventId { get;set; }
     }

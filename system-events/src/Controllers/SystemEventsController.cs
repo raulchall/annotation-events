@@ -4,12 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Threading;
 using SystemEvents.Models;
-using System.Net.Http;
 using Nest;
 using SystemEvents.Configuration;
 using SystemEvents.Utils.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
+using SystemEvents.Enums;
 
 namespace SystemEvents.Controllers
 {
@@ -43,11 +43,11 @@ namespace SystemEvents.Controllers
         /// Creates a new system event
         /// </summary>
         /// <returns>
-        ///   <seealso cref="Task{ActionResult}"/>
+        ///   <seealso cref="Task{ActionResult{EventResponse}}"/>
         /// </returns>
         [HttpPost]
         [Route("event")]
-        public async Task<ActionResult> Create([FromBody] EventRequestModel model, CancellationToken cancellationToken)
+        public async Task<ActionResult<EventResponse>> Create([FromBody] EventRequestModel model, CancellationToken cancellationToken)
         {
             if (!IsValid(model, out string reason))
             {
@@ -64,7 +64,9 @@ namespace SystemEvents.Controllers
 
             if (_categorySubscriptionNotifier == null)
             {
-                return Ok();
+                return Ok(new EventResponse{
+                    EventId = response.Id
+                });
             }
 
             // Notify about this event
@@ -78,7 +80,9 @@ namespace SystemEvents.Controllers
                 // Ignore failure to send notification about system event
             }
 
-            return Ok();
+            return Ok(new EventResponse{
+                EventId = response.Id
+            });
         }
 
         /// <summary>
@@ -86,11 +90,11 @@ namespace SystemEvents.Controllers
         /// event keep the Event Id in the response.
         /// </summary>
         /// <returns>
-        ///   <seealso cref="Task{ActionResult}"/>
+        ///   <seealso cref="Task{ActionResult{EventResponse}}"/>
         /// </returns>
         [HttpPost]
         [Route("event/start")]
-        public async Task<ActionResult<StartEventResponse>> StartEvent([FromBody] EventRequestModel model, CancellationToken cancellationToken)
+        public async Task<ActionResult<EventResponse>> StartEvent([FromBody] EventRequestModel model, CancellationToken cancellationToken)
         {
             if (!IsValid(model, out string reason))
             {
@@ -102,13 +106,14 @@ namespace SystemEvents.Controllers
             {
                 _logger.LogDebug(response.DebugInformation);
                 _logger.LogError(response.OriginalException, "System event was not created");
-
                 return BadRequest("Unable to start a system event");
             }
 
             if (_categorySubscriptionNotifier == null)
             {
-                return Ok();
+                return Ok(new EventResponse{
+                    EventId = response.Id
+                });
             }
 
             // Notify about this event
@@ -122,7 +127,7 @@ namespace SystemEvents.Controllers
                 // Ignore failure to send notification about system event
             }
 
-            return Ok(new StartEventResponse{
+            return Ok(new EventResponse{
                 EventId = response.Id
             });
         }
@@ -175,13 +180,14 @@ namespace SystemEvents.Controllers
             return Ok();
         }
 
-        private async Task<IIndexResponse> CreateSystemEvent(EventRequestModel model, CancellationToken cancellationToken)
+        private Task<IIndexResponse> CreateSystemEvent(EventRequestModel model, CancellationToken cancellationToken)
         {
             if (model.Tags == null)
             {
                 model.Tags = new List<string>();
             }
             
+            model.Tags.Add(model.Level.ToString());
             model.Tags.Add(model.Level.ToString());
 
             var remoteIpAddress = HttpContext.Connection.RemoteIpAddress;
@@ -200,7 +206,7 @@ namespace SystemEvents.Controllers
                 Endtime = eventTimestamp
             };
 
-            return await _esClient.IndexAsync(systemEvent, cancellationToken: cancellationToken);
+            return _esClient.IndexAsync(systemEvent, cancellationToken: cancellationToken);
         }
 
         private bool IsValid(EventRequestModel model, out string reason)
@@ -241,12 +247,19 @@ namespace SystemEvents.Controllers
 
             // If Advance Configuration is enabled then only specified categories 
             // from the configuration can be used
-            if (_advanceConfiguration.Categories!= null 
-                    && !_advanceConfiguration.Categories.Any(c => c.Name == model.Category))
+            var category = _advanceConfiguration?.Categories?.FirstOrDefault(
+                                                  c => c.Name == model.Category);
+            if (category == null)
             {
                 reason = $"The provided category `{model.Category}` is not allowed. Check" + 
                         "/category/all for a list of allowed categories or contact your system administrator.";
+                return false;
+            }
 
+            if (category?.Level != null && category.Level.Value != model.Level)
+            {
+                reason = $"Only events of level `{category.Level.Value}` are allowed for category `{model.Category}`. Check" + 
+                        "/category/all for a list of allowed categories or contact your system administrator.";
                 return false;
             }
             

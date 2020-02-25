@@ -55,6 +55,7 @@ namespace SystemEvents
 
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapHealthChecks("/health");
                 endpoints.MapControllers();
                 endpoints.MapMetrics();
             });
@@ -83,6 +84,8 @@ namespace SystemEvents
                 services.AddSingleton<IMonitoredAmazonSimpleNotificationService, MonitoredAmazonSimpleNotificationService>();
                 services.AddSingleton<ICategorySubscriptionNotifier, CategorySubscriptionNotifier>();
             }
+
+            services.AddHealthChecks();
 
             services.AddControllers()
                     .AddNewtonsoftJson(

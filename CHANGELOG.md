@@ -1,9 +1,11 @@
 # Ideas
 - Add more notification channels (VictorOps, Pager Duty)
 
-# Unrealeased
+# v5.6.7-alpha (02/17/2020)
 ## Added
-## Changed
+- Health check endpoint /health
+- `POST create` now returns the Event Id
+- Advanced configuration now supports per category level restriction
 
 # v5.6.6-alpha (02/17/2020)
 ## Added

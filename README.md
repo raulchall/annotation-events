@@ -164,9 +164,10 @@ categories:
     description: Service deployment events
   - name: Network Maintenance
     description: Network Maintenance events
+    level: critical
 ```
 
-By adding specific Event Categories the service will reject System Events with not allowed Categories, this way the number of categories can be kept under control.
+By adding specific Event Categories the service will reject System Events with not allowed Categories, this way the number of categories can be kept under control. Optionally specify a level for the category, if a level is specified then the system will reject events for the category on different levels, otherwise all levels will be allowed for the category.
 
 
 - Adding support for Category Subscriptions
