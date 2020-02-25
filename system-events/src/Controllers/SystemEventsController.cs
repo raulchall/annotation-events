@@ -245,11 +245,19 @@ namespace SystemEvents.Controllers
             model.TargetKey = model.TargetKey.Trim();
             model.Sender = model.Sender.Trim();
 
+            if (_advanceConfiguration?.Categories == null)
+            {
+                reason = null;
+                return true;
+            }
+
+            var allAllowed = _advanceConfiguration.Categories.Any(c => c.Name == "*");
+
             // If Advance Configuration is enabled then only specified categories 
             // from the configuration can be used
-            var category = _advanceConfiguration?.Categories?.FirstOrDefault(
+            var category = _advanceConfiguration.Categories.FirstOrDefault(
                                                   c => c.Name == model.Category);
-            if (category == null)
+            if (!allAllowed && category == null)
             {
                 reason = $"The provided category `{model.Category}` is not allowed. Check" + 
                         "/category/all for a list of allowed categories or contact your system administrator.";

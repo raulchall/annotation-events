@@ -149,7 +149,7 @@ Advance configuration file
 AdvanceConfigurationPath=../config/config.yml
 ```
 
-- Adding support for Category restrictions
+### Adding support for Category restrictions
 
 Example of Advance Configuration file
 
@@ -169,12 +169,25 @@ categories:
 
 By adding specific Event Categories the service will reject System Events with not allowed Categories, this way the number of categories can be kept under control. Optionally specify a level for the category, if a level is specified then the system will reject events for the category on different levels, otherwise all levels will be allowed for the category.
 
+You can always relax this restriction by adding `*` as an allowed category
 
-- Adding support for Category Subscriptions
+config.yml
+```
+categories:
+  - name: '*'
+    description: All categories are allowed
+  - name: Database Migration
+    description: Database migration events
+    level: critical
+```
+
+In this case the restriction for only `critical`  `Database Migration` events will still apply but the system will allow any other incoming category.
+
+### Adding support for Category Subscriptions
 
 This feature allows for creating notification channels for specific Event Categories, allowing broadcast notifications of important or relevant system events.
 
-It requires `Category restrictions`
+It requires the category to be defined under the `categories` section.
 
 Example of Advance Configuration file
 

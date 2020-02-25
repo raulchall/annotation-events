@@ -1,6 +1,6 @@
 categories:
-  - name: Adhoc
-    description: Use it for unplanned events
+  - name: '*'
+    description: Allow all events
   - name: Database Migration
     description: Database migration events
     level: critical
