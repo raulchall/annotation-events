@@ -9,5 +9,9 @@ namespace SystemEvents.Configuration
         public int ClientTimeoutInMilliseconds { get; }
 
         public string DatetimeFieldFormat { get; }
+
+        public string IndexPatternPrefix { get; }
+
+        public string IndexPatternSuffixFormat { get; }
     }
 }

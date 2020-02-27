@@ -14,5 +14,9 @@ namespace SystemEvents.Configuration
         public int ClientTimeoutInMilliseconds => int.Parse(Environment.GetEnvironmentVariable("ELASTICSEARCH_TIMEOUT_MS"));
 
         public string DatetimeFieldFormat => Environment.GetEnvironmentVariable("ELASTICSEARCH_DATETIME_FORMAT");
+
+        public string IndexPatternPrefix => Environment.GetEnvironmentVariable("ELASTICSEARCH_INDEX_PATTERN_PREFIX");
+
+        public string IndexPatternSuffixFormat => Environment.GetEnvironmentVariable("ELASTICSEARCH_INDEX_PATTERN_SUFFIX_FORMAT");
     }
 }

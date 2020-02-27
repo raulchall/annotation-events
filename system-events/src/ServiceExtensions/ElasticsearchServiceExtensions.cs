@@ -15,14 +15,13 @@ namespace SystemEvents.ServiceExtensions
         {
             var uris = GetUris(configuration.UrlCsv);
             
-            if (string.IsNullOrWhiteSpace(configuration.DefaultIndex))
-            {
-                throw new ArgumentException(
-                    "Missing or invalid value for environment variable ELASTICSEARCH_INDEX");
-            }
-            
             var connectionPool = new SniffingConnectionPool(uris);
-            var settings = new ConnectionSettings(connectionPool).DefaultIndex(configuration.DefaultIndex);
+            var settings = new ConnectionSettings(connectionPool);
+            if (!string.IsNullOrWhiteSpace(configuration.DefaultIndex))
+            {
+                settings.DefaultIndex(configuration.DefaultIndex);
+            }
+
             settings.RequestTimeout(TimeSpan.FromMilliseconds(configuration.ClientTimeoutInMilliseconds));
             var client = new ElasticClient(settings);
 

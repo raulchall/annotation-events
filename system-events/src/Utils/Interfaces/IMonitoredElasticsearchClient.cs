@@ -12,6 +12,11 @@ namespace SystemEvents.Utils.Interfaces
         
         Task<IIndexResponse> IndexAsync(SystemEventElasticsearchDocument document, CancellationToken cancellationToken);
         
-        Task<IUpdateResponse<SystemEventElasticsearchDocument>> UpdateAsync(string documentId, string indexName, SystemEventElasticsearchPartialDocument partialDocument, CancellationToken cancellationToken, int retryOnConflict = 3);
+        Task<IUpdateResponse<SystemEventElasticsearchDocument>> UpdateAsync(
+            string documentId, 
+            SystemEventElasticsearchPartialDocument partialDocument, 
+            CancellationToken cancellationToken, 
+            int retryOnConflict = 3, 
+            bool retryWithPreviousIndex = false);
     }
 }

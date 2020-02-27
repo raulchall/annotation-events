@@ -148,17 +148,14 @@ namespace SystemEvents.Controllers
             }
 
             var response = await _esClient.UpdateAsync(
-                        eventId, 
-                        _esClientConfiguration.DefaultIndex, 
+                        eventId,
                         new SystemEventElasticsearchPartialDocument { Endtime = _timeStampFactory.GetTimestamp()},
-                        cancellationToken: cancellationToken);
+                        cancellationToken: cancellationToken, retryWithPreviousIndex: true);
 
             if (!response.IsValid)
             {
-                _logger.LogDebug(response.DebugInformation);
-                _logger.LogError(response.OriginalException, "System event was not created");
-
-                return BadRequest("Unable to mark system event as concluded");
+                _logger.LogError(response.OriginalException, "System event was not updated");
+                return BadRequest("Unable to update system event");
             }
 
             if (_categorySubscriptionNotifier == null)

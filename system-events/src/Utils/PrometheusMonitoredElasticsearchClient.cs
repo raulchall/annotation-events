@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Nest;
+using SystemEvents.Configuration;
 using SystemEvents.Models;
 using SystemEvents.Utils.Interfaces;
 
@@ -12,76 +13,133 @@ namespace SystemEvents.Utils
     public class PrometheusMonitoredElasticsearchClient : MonitoredClientBase, IMonitoredElasticsearchClient
     {
         private readonly IElasticClient _esClient;
+        private readonly IElasticsearchClientConfiguration _elasticSearchClientconfiguration;
+        private readonly IElasticsearchIndexFactory _indexFactory;
 
         private const string _clientName = "ElasticsearchClient";
         private const string _indexMethodName = "IndexAsync";
         private const string _updateMethodName = "UpdateAsync";
         private const string _getMethodName = "GetAsync";
 
+        
+
         public PrometheusMonitoredElasticsearchClient(
             ILogger<PrometheusMonitoredElasticsearchClient> logger,
-            IElasticClient esClient) : base (logger)
+            IElasticsearchClientConfiguration elasticSearchClientconfiguration,
+            IElasticClient esClient,
+            IElasticsearchIndexFactory indexFactory) : base (logger)
         {
-            _esClient              = esClient ?? throw new ArgumentNullException(nameof(esClient));
+            _esClient                              = esClient ?? throw new ArgumentNullException(nameof(esClient));
+            _elasticSearchClientconfiguration      = elasticSearchClientconfiguration 
+                                                        ?? throw new ArgumentNullException(nameof(elasticSearchClientconfiguration));
+            _indexFactory                          = indexFactory 
+                                                        ?? throw new ArgumentNullException(nameof(indexFactory));
         }
 
         public async Task<SystemEventElasticsearchDocument> GetAsync(string documentId, CancellationToken cancellationToken)
         {
-            var context = new { documentId };
-
-            var latency = PreInvoke(_clientName, _getMethodName, context);
+            string indexName = null;
+            var latency = PreInvoke(_clientName, _getMethodName, documentId);
             try
             {
-                var result = await _esClient.GetAsync<SystemEventElasticsearchDocument>(documentId,  
-                                                                    cancellationToken: cancellationToken);
-                PostInvokeSuccess(latency, _clientName, _getMethodName, context);
+                indexName = _indexFactory.GetIndexName();
+                var result = await _esClient.GetAsync<SystemEventElasticsearchDocument>(
+                                            new GetRequest<SystemEventElasticsearchDocument>(indexName, documentId),
+                                            cancellationToken: cancellationToken);
+
+                PostInvokeSuccess(latency, _clientName, _getMethodName, documentId, indexName);
                 return result.Source;
             }
             catch (Exception ex)
             {
-                PostInvokeFailure(_clientName, _getMethodName, ex, context);
+                PostInvokeFailure(_clientName, _getMethodName, ex, documentId, indexName);
                 throw;
             }
         }
 
         public async Task<IIndexResponse> IndexAsync(SystemEventElasticsearchDocument document, CancellationToken cancellationToken)
         {
-            var context = new { document };
-
-            var latency = PreInvoke(_clientName, _indexMethodName, context);
+            string indexName = null;
+            var latency = PreInvoke(_clientName, _indexMethodName, document);
             try
             {
-                var result = await _esClient.IndexAsync(document, cancellationToken: cancellationToken);
-                PostInvokeSuccess(latency, _clientName, _indexMethodName, context);
+                indexName = _indexFactory.GetIndexName();
+                var result = await _esClient.IndexAsync( new IndexRequest<SystemEventElasticsearchDocument>(
+                                                            document, indexName), cancellationToken: cancellationToken);
+
+                PostInvokeSuccess(latency, _clientName, _indexMethodName, document, indexName);
                 return result;
             }
             catch (Exception ex)
             {
-                PostInvokeFailure(_clientName, _indexMethodName, ex, context);
+                PostInvokeFailure(_clientName, _indexMethodName, ex, document, indexName);
                 throw;
             }
         }
 
-        public async Task<IUpdateResponse<SystemEventElasticsearchDocument>> UpdateAsync(string documentId, string indexName, SystemEventElasticsearchPartialDocument partialDocument, CancellationToken cancellationToken, int retryOnConflict = 3)
+        public async Task<IUpdateResponse<SystemEventElasticsearchDocument>> UpdateAsync(
+                string documentId, SystemEventElasticsearchPartialDocument partialDocument, 
+                CancellationToken cancellationToken, int retryOnConflict = 3, 
+                bool retryWithPreviousIndex = false)
         {
-            var context = new { documentId, indexName, partialDocument };
-
-            var latency = PreInvoke(_clientName, _updateMethodName, context);
+            string indexName = null;
+            var latency = PreInvoke(_clientName, _updateMethodName, documentId, partialDocument);
             try
             {
-                var result = await _esClient.UpdateAsync<SystemEventElasticsearchDocument, SystemEventElasticsearchPartialDocument>(
+                indexName = _indexFactory.GetIndexName();
+                Task<IUpdateResponse<SystemEventElasticsearchDocument>> updateResult = null;
+                if (retryWithPreviousIndex)
+                {
+                    updateResult = UpdateWithRetryOnPreviousIndexAsync(
+                        documentId, partialDocument, cancellationToken, retryOnConflict);
+                }
+                else
+                {
+                    updateResult = _esClient.UpdateAsync<SystemEventElasticsearchDocument, SystemEventElasticsearchPartialDocument>(
                         documentId, u => u
                         .Index(indexName)
                         .Doc(partialDocument)
                         .RetryOnConflict(retryOnConflict), cancellationToken: cancellationToken);
-                PostInvokeSuccess(latency, _clientName, _updateMethodName, context);
+                }
+
+                var result = await updateResult;
+                
+                PostInvokeSuccess(latency, _clientName, _updateMethodName, documentId, partialDocument, indexName);
                 return result;
             }
             catch (Exception ex)
             {
-                PostInvokeFailure(_clientName, _updateMethodName, ex, context);
+                PostInvokeFailure(_clientName, _updateMethodName, ex, documentId, partialDocument, indexName);
                 throw;
             }
         }
+
+        public async Task<IUpdateResponse<SystemEventElasticsearchDocument>> UpdateWithRetryOnPreviousIndexAsync(
+                string documentId, SystemEventElasticsearchPartialDocument partialDocument, 
+                CancellationToken cancellationToken, int retryOnConflict)
+        {
+            try
+            {
+                var indexName = _indexFactory.GetIndexName();
+                return await _esClient.UpdateAsync<SystemEventElasticsearchDocument, SystemEventElasticsearchPartialDocument>(
+                        documentId, u => u
+                        .Index(indexName)
+                        .Doc(partialDocument)
+                        .RetryOnConflict(retryOnConflict), cancellationToken: cancellationToken);
+            }
+            catch 
+            { 
+                // Ignore
+            }
+
+            var previousIndexName = _indexFactory.GetPreviousIndexName();
+            return await _esClient.UpdateAsync<SystemEventElasticsearchDocument, SystemEventElasticsearchPartialDocument>(
+                    documentId, u => u
+                    .Index(previousIndexName)
+                    .Doc(partialDocument)
+                    .RetryOnConflict(retryOnConflict), cancellationToken: cancellationToken);
+        }
+
+
     }
 }

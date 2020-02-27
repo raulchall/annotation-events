@@ -36,18 +36,16 @@ namespace SystemEvents.Utils
                 TopicArn = topicArn
             };
 
-            var context = new { topicArn, message };
-
-            var latency = PreInvoke(_clientName, _publishMethodName, context);
+            var latency = PreInvoke(_clientName, _publishMethodName, topicArn, message);
             try
             {
                 var result = await _client.PublishAsync(request, cancellationToken);
-                PostInvokeSuccess(latency, _clientName, _publishMethodName, context);
+                PostInvokeSuccess(latency, _clientName, _publishMethodName, topicArn, message);
                 return result;
             }
             catch (Exception ex)
             {
-                PostInvokeFailure(_clientName, _publishMethodName, ex, context);
+                PostInvokeFailure(_clientName, _publishMethodName, ex, topicArn, message);
                 throw;
             }
         }

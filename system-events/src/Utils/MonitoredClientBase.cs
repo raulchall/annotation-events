@@ -40,24 +40,24 @@ namespace SystemEvents.Utils
                     "Client", "Method");
         }
 
-        protected Stopwatch PreInvoke(string client, string method, object context = null)
+        protected Stopwatch PreInvoke(string client, string method, params object[] args)
         {
-            _logger.LogTrace($"\"{client}.{method}\" called", context);
+            _logger.LogTrace($"\"{client}.{method}\" called", args);
             _attemptCounter.WithLabels(client, method).Inc();
             return Stopwatch.StartNew();
         }
 
-        protected void PostInvokeSuccess(Stopwatch watch, string client, string method, object context = null)
+        protected void PostInvokeSuccess(Stopwatch watch, string client, string method, params object[] args)
         {
             _successCounter.WithLabels(client, method).Inc();
             _durationHistogram.WithLabels(client, method).Observe(watch.Elapsed.TotalSeconds);
-            _logger.LogTrace($"\"{client}.{method}\" completed in {watch.ElapsedMilliseconds} ms", context);
+            _logger.LogTrace($"\"{client}.{method}\" completed in {watch.ElapsedMilliseconds} ms", args);
         }
 
-        protected void PostInvokeFailure(string client, string method, Exception ex, object context = null)
+        protected void PostInvokeFailure(string client, string method, Exception ex, params object[] args)
         {
             _failCounter.WithLabels(client, method).Inc();
-            _logger.LogError($"\"{client}.{method}\" failed", ex, context);
+            _logger.LogError(ex, $"\"{client}.{method}\" failed", args);
         }
     }
 }

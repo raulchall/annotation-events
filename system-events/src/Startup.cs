@@ -73,6 +73,7 @@ namespace SystemEvents
 
             services.AddSingleton<IElasticsearchTimeStampFactory, ElasticsearchTimeStampFactory>();
             services.AddElasticsearch(configuration);
+            services.AddSingleton<IElasticsearchIndexFactory, ElasticsearchIndexFactory>();
             services.AddSingleton<IMonitoredElasticsearchClient, PrometheusMonitoredElasticsearchClient>();
 
             // Inject Notification Channel Clients
