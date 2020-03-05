@@ -5,6 +5,9 @@ namespace SystemEvents.Models
 {
     public class SystemEventElasticsearchDocument
     {
+        [JsonProperty("_id")]
+        public string Id { get;set; }
+
         [JsonProperty("category")]
         public string Category { get;set; }
 
@@ -18,7 +21,7 @@ namespace SystemEvents.Models
         public string Message { get;set; }
 
         [JsonProperty("tags")]
-        public ICollection<string> Tags { get;set; }
+        public string[] Tags { get;set; }
 
         [JsonProperty("sender")]
         public string Sender { get;set; }

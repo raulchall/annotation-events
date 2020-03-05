@@ -1,6 +1,15 @@
 # Ideas
 - Add more notification channels (VictorOps, Pager Duty)
 
+# Unreleased
+## Added
+- Slack App support 
+- All category notification channel subscription
+
+# v5.7.1-alpha (02/26/2020)
+## Fixed
+- Bug adding duplicated level to 
+
 # v5.7.0-alpha (02/26/2020)
 ## Added
 - Support for indices with daily granularity. A prefix can be set using the `ELASTICSEARCH_INDEX_PATTERN_PREFIX`(Ex. `sysevents.`) environment variable and by using `ELASTICSEARCH_INDEX_PATTERN_SUFFIX_FORMAT` set to `YYYY.MM.DD` the service will construct the index name base on the current day Ex. `sysevents.2020.02.26`

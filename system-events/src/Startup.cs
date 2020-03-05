@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -69,6 +68,7 @@ namespace SystemEvents
             // Inject the configuration
             services.AddSingleton<IAppConfiguration>(provider => configuration);
             services.AddSingleton<IElasticsearchClientConfiguration>(provider => configuration);
+            services.AddSingleton<ISlackApiConfiguration>(provider => configuration);
             services.AddAdvanceConfiguration(configuration);
 
             services.AddSingleton<IElasticsearchTimeStampFactory, ElasticsearchTimeStampFactory>();
@@ -76,10 +76,13 @@ namespace SystemEvents
             services.AddSingleton<IElasticsearchIndexFactory, ElasticsearchIndexFactory>();
             services.AddSingleton<IMonitoredElasticsearchClient, PrometheusMonitoredElasticsearchClient>();
 
+            services.AddHttpClient<SlackApiService>();
+            services.AddSingleton<ISystemEventSender, SystemEventSender>();
+
             // Inject Notification Channel Clients
             if (!string.IsNullOrWhiteSpace(configuration.AdvanceConfigurationPath))
             {
-                services.AddHttpClient<SlackService>();
+                services.AddHttpClient<SlackWebhookService>();
                 services.AddDefaultAWSOptions(Configuration.GetAWSOptions());
                 services.AddAWSService<IAmazonSimpleNotificationService>();
                 services.AddSingleton<IMonitoredAmazonSimpleNotificationService, MonitoredAmazonSimpleNotificationService>();

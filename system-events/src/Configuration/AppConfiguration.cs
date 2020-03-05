@@ -3,7 +3,7 @@ using System;
 
 namespace SystemEvents.Configuration
 {
-    public class AppConfiguration : IAppConfiguration, IElasticsearchClientConfiguration
+    public class AppConfiguration : IAppConfiguration, IElasticsearchClientConfiguration, ISlackApiConfiguration
     {
         public string AdvanceConfigurationPath => Environment.GetEnvironmentVariable("AdvanceConfigurationPath");
 
@@ -18,5 +18,7 @@ namespace SystemEvents.Configuration
         public string IndexPatternPrefix => Environment.GetEnvironmentVariable("ELASTICSEARCH_INDEX_PATTERN_PREFIX");
 
         public string IndexPatternSuffixFormat => Environment.GetEnvironmentVariable("ELASTICSEARCH_INDEX_PATTERN_SUFFIX_FORMAT");
+
+        public string SlackBotUserOAuthAccessToken => Environment.GetEnvironmentVariable("SLACK_OAUTHACCESS_TOKEN");
     }
 }

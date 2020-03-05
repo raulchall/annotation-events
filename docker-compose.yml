@@ -13,7 +13,7 @@ services:
     networks:
       - system-events
     ports:
-      - "80"
+      - "4390:80"
   
   grafana:
     image: grafana/grafana:6.6.0

@@ -215,6 +215,15 @@ subscriptions:
     webhook_url: https://hooks.slack.com/services/Your/WebHook/Url
 ```
 
+You can create a subscription for all your categories by using the `*` category
+Ex.
+```
+subscriptions:
+  - type: slack
+    category: '*'
+    webhook_url: https://hooks.slack.com/services/Your/WebHook/Url
+```
+
 Supported Notification Channels:
 - [Slack Webhooks](https://api.slack.com/messaging/webhooks)
 - [AWS Simple Notification Service (Sns)](https://aws.amazon.com/sns/?whats-new-cards.sort-by=item.additionalFields.postDateTime&whats-new-cards.sort-order=desc)
