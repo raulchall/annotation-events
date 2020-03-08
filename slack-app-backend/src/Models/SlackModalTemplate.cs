@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using System.Text;
+using SystemEvents.Api.Client.CSharp.Contracts;
 
-namespace SystemEvents.Models.Slack
+namespace SlackAppBackend.Models.Slack
 {
     public static class SlackModalTemplate
     {

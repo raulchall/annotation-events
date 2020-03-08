@@ -1,4 +1,4 @@
-namespace SystemEvents.Models.Slack
+namespace SlackAppBackend.Models.Slack
 {
     public class OpenSlackModalRequest
     {

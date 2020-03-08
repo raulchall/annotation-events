@@ -8,7 +8,7 @@
 
 # v5.7.1-alpha (02/26/2020)
 ## Fixed
-- Bug adding duplicated level to 
+- Bug adding duplicated level to event
 
 # v5.7.0-alpha (02/26/2020)
 ## Added

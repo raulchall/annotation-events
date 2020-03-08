@@ -1,4 +1,4 @@
-namespace SystemEvents.Enums
+namespace SlackAppBackend.Enums
 {
     public enum SlackCommand
     {

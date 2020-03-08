@@ -4,15 +4,15 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using SystemEvents.Configuration;
-using SystemEvents.Models.Slack;
-using SystemEvents.Utils;
+using SlackAppBackend.Configuration;
+using SlackAppBackend.Models.Slack;
+using SlackAppBackend.Utils;
 
-namespace SystemEvents.Services
+namespace SlackAppBackend.Services
 {
     public class SlackApiService: MonitoredClientBase
     {
-        private readonly ISlackApiConfiguration _configuration;
+        private readonly IAppConfiguration _configuration;
         private readonly HttpClient _client;
 
         private const string _clientName = "SlackApiClient";
@@ -22,7 +22,7 @@ namespace SystemEvents.Services
 
         public SlackApiService(
             ILogger<SlackApiService> logger,
-            ISlackApiConfiguration configuration,
+            IAppConfiguration configuration,
             HttpClient client) : base (logger)
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));

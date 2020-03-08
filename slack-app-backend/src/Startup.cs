@@ -1,18 +1,19 @@
-using Amazon.SimpleNotificationService;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using Prometheus;
-using SystemEvents.Configuration;
-using SystemEvents.ServiceExtensions;
-using SystemEvents.Services;
-using SystemEvents.Utils;
-using SystemEvents.Utils.Interfaces;
+using SlackAppBackend.Configuration;
+using SlackAppBackend.Utils.Interfaces;
+using SlackAppBackend.Services;
+using SlackAppBackend.Utils;
+using SystemEvents.Api.Client.CSharp.Contracts;
+using SystemEvents.Api.Client.CSharp;
 
 namespace SystemEvents
 {
@@ -33,8 +34,15 @@ namespace SystemEvents
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseOpenApi();
-            app.UseSwaggerUi3();
+            // Enable middleware to serve generated Swagger as a JSON endpoint.
+            app.UseSwagger();
+
+            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
+            // specifying the Swagger JSON endpoint.
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "SlackAppBackend");
+            });
 
             app.UseHttpsRedirection();
 
@@ -59,23 +67,20 @@ namespace SystemEvents
             
             // Inject the configuration
             services.AddSingleton<IAppConfiguration>(provider => configuration);
-            services.AddSingleton<IElasticsearchClientConfiguration>(provider => configuration);
-            services.AddAdvanceConfiguration(configuration);
 
-            services.AddSingleton<IElasticsearchTimeStampFactory, ElasticsearchTimeStampFactory>();
-            services.AddElasticsearch(configuration);
-            services.AddSingleton<IElasticsearchIndexFactory, ElasticsearchIndexFactory>();
-            services.AddSingleton<IMonitoredElasticsearchClient, PrometheusMonitoredElasticsearchClient>();
-
-            // Inject Notification Channel Clients
-            if (!string.IsNullOrWhiteSpace(configuration.AdvanceConfigurationPath))
+            services.AddHttpClient<ISystemEventsClient, SystemEventsClient>((provider, client) =>
             {
-                services.AddHttpClient<SlackWebhookService>();
-                services.AddDefaultAWSOptions(Configuration.GetAWSOptions());
-                services.AddAWSService<IAmazonSimpleNotificationService>();
-                services.AddSingleton<IMonitoredAmazonSimpleNotificationService, MonitoredAmazonSimpleNotificationService>();
-                services.AddSingleton<ICategorySubscriptionNotifier, CategorySubscriptionNotifier>();
-            }
+                client.BaseAddress = configuration.SystemEventServiceUri;
+            });
+
+            services.AddHttpClient<ICategoriesClient, CategoriesClient>((provider, client) =>
+            {
+                client.BaseAddress = configuration.SystemEventServiceUri;
+            });
+
+            services.AddSingleton<IMonitoredSystemEventServiceClient, MonitoredSystemEventServiceClient>();
+          
+            services.AddHttpClient<SlackApiService>();
 
             services.AddHealthChecks();
 
@@ -90,14 +95,9 @@ namespace SystemEvents
                         });
 
             // Register the Swagger generator, defining 1 or more Swagger documents
-            services.AddSwaggerDocument(settings =>
+            services.AddSwaggerGen(c =>
             {
-                settings.PostProcess = document =>
-                {
-                    document.Info.Version = "v1";
-                    document.Info.Title = "System Events API";
-                    document.Info.Description = "REST API for managing system events";
-                };
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "SlackAppBackend", Version = "v1" });
             });
         }
     }

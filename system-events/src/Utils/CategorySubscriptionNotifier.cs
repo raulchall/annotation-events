@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -26,7 +24,6 @@ namespace SystemEvents.Utils
         private const string _onEventStartedNotificationMessage = "New System Event Started";
         private const string _onEventFinishedNotificationMessage = "System Event Finished";
         private const string _allCategoriesKey = "*";
-
         private const string _SystemName = "SystemEvents";
         private const string _SystemIcon = ":loudspeaker:";
 

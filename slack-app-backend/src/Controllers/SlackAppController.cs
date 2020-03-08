@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -7,32 +8,29 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using SystemEvents.Enums;
-using SystemEvents.Models;
-using SystemEvents.Models.Slack;
-using SystemEvents.Services;
-using SystemEvents.Utils.Interfaces;
+using SlackAppBackend.Enums;
+using SlackAppBackend.Models.Slack;
+using SlackAppBackend.Services;
+using SlackAppBackend.Utils.Interfaces;
+using SystemEvents.Api.Client.CSharp.Contracts;
 
-namespace SystemEvents.Controllers
+namespace SlackAppBackend.Controllers
 {
     [ApiController]
     public class SlackAppController : ControllerBase
     {
-        private readonly ILogger<SystemEventsController> _logger;
+        private readonly ILogger<SlackAppController> _logger;
         private readonly SlackApiService _slackApiService;
-        private readonly IAdvanceConfiguration _advanceConfiguration;
-        private readonly ISystemEventSender _systemEventSender;
+        private readonly IMonitoredSystemEventServiceClient _systemEventClient;
 
         public SlackAppController(
-            ILogger<SystemEventsController> logger,
+            ILogger<SlackAppController> logger,
             SlackApiService slackApiService,
-            IAdvanceConfiguration advanceConfiguration,
-            ISystemEventSender systemEventSender)
+            IMonitoredSystemEventServiceClient systemEventClient)
         {
             _logger                 = logger ?? throw new ArgumentNullException(nameof(logger));
             _slackApiService        = slackApiService ?? throw new ArgumentNullException(nameof(slackApiService));
-            _advanceConfiguration   = advanceConfiguration ?? throw new ArgumentNullException(nameof(advanceConfiguration));
-            _systemEventSender  = systemEventSender ?? throw new ArgumentNullException(nameof(systemEventSender));
+            _systemEventClient      = systemEventClient ?? throw new ArgumentNullException(nameof(systemEventClient));
         }
 
         /// <summary>
@@ -45,10 +43,11 @@ namespace SystemEvents.Controllers
         [Route("slack/template")]
         public ActionResult GetModalTemplate(CancellationToken cancellationToken)
         {
-            var view = SlackModalTemplate.GetDialogTemplateWithCategories(
-                _advanceConfiguration.Categories.Where(c => c.Name != "*").ToList());
+            // var view = SlackModalTemplate.GetDialogTemplateWithCategories(
+            //     _advanceConfiguration.Categories.Where(c => c.Name != "*").ToList());
 
-            return Ok(view);
+            // return Ok(view);
+            return Ok();
         }
 
         /// <summary>
@@ -80,12 +79,10 @@ namespace SystemEvents.Controllers
             switch(command.Item1)
             {
                 case SlackCommand.Create:
-                    await _systemEventSender.Create(new EventRequestModel{
-
-                    }, cancellationToken);
+                    var categories = await _systemEventClient.CategoryAllGetAsync();
 
                     var view = SlackModalTemplate.GetDialogTemplateWithCategories(
-                        _advanceConfiguration.Categories.Where(c => c.Name != "*").ToList());
+                        categories.Where(c => c.Name != "*").ToList());
 
                     var response = await _slackApiService.OpenDialogAsync(new OpenSlackModalRequest
                     {
@@ -94,7 +91,7 @@ namespace SystemEvents.Controllers
                     });
                     break;
                 case SlackCommand.End:
-                    await _systemEventSender.End(command.Item2, cancellationToken);
+                    await _systemEventClient.EventEndPostAsync(command.Item2);
                     break;
                 default:
                     throw new ArgumentException($"Unrecognized command {request.text}");
@@ -139,21 +136,21 @@ namespace SystemEvents.Controllers
                 Level = GetLevel(values.event_level.level.selected_option.value),
                 Message = values.event_message.message.value,
                 Sender = payload.user.username,
-                Tags = tags
+                Tags = new ObservableCollection<string>(tags)
             };
 
-            var id = await _systemEventSender.Create(model, cancellationToken);
+            await _systemEventClient.EventPostAsync(model);
             return Ok(new {
                 response_action = "clear"
             });
         }
 
-        private Enums.Level GetLevel(string level)
+        private SystemEvents.Api.Client.CSharp.Contracts.Level GetLevel(string level)
         {
-            var parsed = Enum.TryParse(level, ignoreCase: true, out Enums.Level result);
+            var parsed = Enum.TryParse(level, ignoreCase: true, out SystemEvents.Api.Client.CSharp.Contracts.Level result);
             if (!parsed)
             {
-                return Enums.Level.Information;
+                return SystemEvents.Api.Client.CSharp.Contracts.Level.Information;
             }
 
             return result;
