@@ -14,6 +14,26 @@ namespace SlackAppBackend.Configuration
 
     public static class AppConfigurationUtils
     {
+        public static void ValidateAppConfiguration(this IAppConfiguration configuration)
+        {
+            if (string.IsNullOrWhiteSpace(configuration.SlackBotUserOAuthAccessToken))
+            {
+                throw new ArgumentException(
+                    $"{nameof(configuration.SlackBotUserOAuthAccessToken)} can not be null or whitespace");
+            }
+
+            if (string.IsNullOrWhiteSpace(configuration.SlackSignedSecret))
+            {
+                throw new ArgumentException(
+                    $"{nameof(configuration.SlackSignedSecret)} can not be null or whitespace");
+            }
+
+            if (!configuration.ShowCustomCategory && !configuration.ShowPredefinedCategory)
+            {
+                throw new ArgumentException(
+                    $"One of {nameof(configuration.ShowCustomCategory)} or {nameof(configuration.ShowPredefinedCategory)} is required to be true");
+            }   
+        }
         public static bool BooleanParseOrDefault(string environmentVariable, bool defaultValue = false)
         {
             var parsed = bool.TryParse(Environment.GetEnvironmentVariable(environmentVariable), out var result);

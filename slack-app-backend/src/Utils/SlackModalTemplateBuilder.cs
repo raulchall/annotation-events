@@ -18,7 +18,6 @@ namespace SlackAppBackend.Utils
 
         public string GetDialogTemplateWithCategories(List<Category> categories = null)
         {
-
             var templateSb = new StringBuilder(_newSystemEventModalTemplate);
 
             var categorySelect = String.Empty;
@@ -39,10 +38,16 @@ namespace SlackAppBackend.Utils
             }
 
             templateSb.Replace("<CATEGORY_SELECT>", categorySelect);
+            // Make category select optional if the custom categories are enabled
+            templateSb.Replace("<CATEGORY_SELECT_OPTIONAL>", 
+                    _configuration.ShowCustomCategory? "true" : "false");
 
             if (_configuration.ShowCustomCategory)
             {
                 templateSb.Replace("<CUSTOM_CATEGORY_INPUT>", _customCategoryInputTemplate);
+                // Make custom category optional if the predefined categories are enabled
+                templateSb.Replace("<CUSTOM_CATEGORY_OPTIONAL>", 
+                        _configuration.ShowPredefinedCategory? "true" : "false");
             }
             else 
             {
@@ -74,7 +79,7 @@ namespace SlackAppBackend.Utils
         {
             ""block_id"": ""event_category_select"",
             ""type"": ""input"",
-            ""optional"": true,
+            ""optional"": <CATEGORY_SELECT_OPTIONAL>,
             ""label"": {
 				""type"": ""plain_text"",
 				""text"": ""Category"",
@@ -91,15 +96,6 @@ namespace SlackAppBackend.Utils
                     <CATEGORY_OPTIONS>
                 ]
             }
-        },
-        {
-            ""type"": ""context"",
-            ""elements"": [
-                {
-                    ""type"": ""mrkdwn"",
-                    ""text"": ""Or enter your own category :point_down:""
-                }
-            ]
         },";
 
         private const string _multipleCategoryInputHelp = @"
@@ -117,7 +113,7 @@ namespace SlackAppBackend.Utils
         {
             ""block_id"": ""event_custom_category"",
             ""type"": ""input"",
-            ""optional"": true,
+            ""optional"": <CUSTOM_CATEGORY_OPTIONAL>,
             ""element"": {
                 ""type"": ""plain_text_input"",
                 ""action_id"": ""custom_category"",

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using SlackAppBackend.Configuration;
 using SlackAppBackend.Enums;
 using SlackAppBackend.Models.Slack;
 using SlackAppBackend.Services;
@@ -23,12 +24,14 @@ namespace SlackAppBackend.Controllers
         private readonly SlackApiService _slackApiService;
         private readonly IMonitoredSystemEventServiceClient _systemEventClient;
         private readonly ISlackModalTemplateBuilder _slackModalTemplateBuilder;
+        private readonly IAppConfiguration _configuration;
 
         public SlackAppController(
             ILogger<SlackAppController> logger,
             SlackApiService slackApiService,
             IMonitoredSystemEventServiceClient systemEventClient,
-            ISlackModalTemplateBuilder slackModalTemplateBuilder)
+            ISlackModalTemplateBuilder slackModalTemplateBuilder,
+            IAppConfiguration configuration)
         {
             _logger                    = logger 
                                             ?? throw new ArgumentNullException(nameof(logger));
@@ -38,6 +41,8 @@ namespace SlackAppBackend.Controllers
                                             ?? throw new ArgumentNullException(nameof(systemEventClient));
             _slackModalTemplateBuilder = slackModalTemplateBuilder 
                                             ?? throw new ArgumentNullException(nameof(slackModalTemplateBuilder));
+            _configuration             = configuration 
+                                            ?? throw new ArgumentNullException(nameof(configuration));
         }
 
         /// <summary>
@@ -104,19 +109,82 @@ namespace SlackAppBackend.Controllers
             var values = payload.view.state.values;
 
             string category = null;
-            if (!string.IsNullOrWhiteSpace(values.event_custom_category.custom_category.value))
+            try
             {
-                category = values.event_custom_category.custom_category.value.Trim();
+                if (_configuration.ShowPredefinedCategory)
+                {
+                    category = values.event_category_select.category.selected_option.value.Trim();
+                }
             }
-            else
+            catch
             {
-                category = values.event_category_select.category.selected_option.value.Trim();
+                if (!_configuration.ShowCustomCategory)
+                {
+                    return Ok(new {
+                        response_action = "errors",
+                        errors = new {
+                            event_category_select = "Select a category for your event",
+                        }
+                    });
+                }
+            }
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(category) && _configuration.ShowCustomCategory)
+                {
+                    category = values.event_custom_category.custom_category.value.Trim();
+                }
+            }
+            catch
+            {
+                return Ok(new {
+                    response_action = "errors",
+                    errors = new {
+                        event_custom_category = "Enter a category for your event",
+                    }
+                });
+            }
+
+            if (string.IsNullOrWhiteSpace(category))
+            {
+                return Ok(new {
+                    response_action = "errors",
+                    errors = new {
+                        event_category_select = "Select a category for your event",
+                        event_custom_category = "Enter a category for your event",
+                    }
+                });
             }
 
             var tags = new List<string>();
             if (!string.IsNullOrWhiteSpace(values.event_tags.tags.value))
             {
-                tags = values.event_tags.tags.value.Split(",").Select(e => e.Trim()).ToList();
+                tags = values.event_tags.tags.value
+                            .Split(",")
+                            .Select(e => e.Trim())
+                            .Where(e => !string.IsNullOrWhiteSpace(e))
+                            .ToList();
+            }
+
+            if (string.IsNullOrWhiteSpace(values?.event_target?.target?.value))
+            {
+                return Ok(new {
+                    response_action = "errors",
+                    errors = new {
+                        event_target = "Enter a target for your event"
+                    }
+                });
+            }
+
+            if (string.IsNullOrWhiteSpace(values?.event_message?.message?.value))
+            {
+                return Ok(new {
+                    response_action = "errors",
+                    errors = new {
+                        event_message = "Enter a message for your event"
+                    }
+                });
             }
 
             var model = new EventRequestModel

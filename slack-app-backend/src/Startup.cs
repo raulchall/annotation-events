@@ -59,6 +59,8 @@ namespace SlackAppBackend
         public void ConfigureServices(IServiceCollection services)
         {
             var configuration = new AppConfiguration();
+
+            configuration.ValidateAppConfiguration();
             
             // Inject the configuration
             services.AddSingleton<IAppConfiguration>(provider => configuration);
