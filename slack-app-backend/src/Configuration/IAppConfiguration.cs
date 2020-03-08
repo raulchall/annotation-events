@@ -7,5 +7,7 @@ namespace SlackAppBackend.Configuration
         Uri SystemEventServiceUri { get; }
 
         string SlackBotUserOAuthAccessToken { get; }
+
+        string SlackSignedSecret { get; }
     }
 }

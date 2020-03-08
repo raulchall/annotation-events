@@ -12,7 +12,7 @@
     <PackageReference Include="Serilog" Version="2.9.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="3.1.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="5.0.0-rc4" />
+    <PackageReference Include="NSwag.AspNetCore" Version="13.2.5" />
     <PackageReference Include="JsonSubTypes" Version="1.5.2" />
     <PackageReference Include="RestSharp" Version="106.10.1" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="4.5.0" />

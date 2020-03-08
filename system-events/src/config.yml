@@ -24,4 +24,4 @@ subscriptions:
     webhook_url: https://hooks.slack.com/services/Your/WebHook/Url
   - type: slack
     category: '*'
-    webhook_url: https://hooks.slack.com/services/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
+    webhook_url: https://hooks.slack.com/services/Your/WebHook/Url

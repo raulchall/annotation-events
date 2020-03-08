@@ -5,6 +5,7 @@
 ## Added
 - Slack App support 
 - All category notification channel subscription
+- Slack App Api Backend
 
 # v5.7.1-alpha (02/26/2020)
 ## Fixed

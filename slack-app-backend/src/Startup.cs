@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
@@ -14,8 +13,9 @@ using SlackAppBackend.Services;
 using SlackAppBackend.Utils;
 using SystemEvents.Api.Client.CSharp.Contracts;
 using SystemEvents.Api.Client.CSharp;
+using SlackAppBackend.Middlewares;
 
-namespace SystemEvents
+namespace SlackAppBackend
 {
     public class Startup
     {
@@ -34,15 +34,8 @@ namespace SystemEvents
                 app.UseDeveloperExceptionPage();
             }
 
-            // Enable middleware to serve generated Swagger as a JSON endpoint.
-            app.UseSwagger();
-
-            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
-            // specifying the Swagger JSON endpoint.
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "SlackAppBackend");
-            });
+            app.UseOpenApi();
+            app.UseSwaggerUi3();
 
             app.UseHttpsRedirection();
 
@@ -51,6 +44,8 @@ namespace SystemEvents
             app.UseHttpMetrics();
 
             app.UseAuthorization();
+            
+            app.UseMiddleware<SlackRequestMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {
@@ -95,9 +90,14 @@ namespace SystemEvents
                         });
 
             // Register the Swagger generator, defining 1 or more Swagger documents
-            services.AddSwaggerGen(c =>
+            services.AddSwaggerDocument(settings =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "SlackAppBackend", Version = "v1" });
+                settings.PostProcess = document =>
+                {
+                    document.Info.Version = "v1";
+                    document.Info.Title = "Slack App API Backend";
+                    document.Info.Description = "REST API for System Events Slack App";
+                };
             });
         }
     }

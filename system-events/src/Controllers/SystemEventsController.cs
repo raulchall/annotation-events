@@ -275,6 +275,9 @@ namespace SystemEvents.Controllers
             model.Tags.Add(model.Category);
             model.Tags.Add(model.TargetKey);
 
+            // Remove duplicates
+            var hashset = model.Tags.ToHashSet();
+
             var eventTimestamp = _timeStampFactory.GetTimestamp();
             var systemEvent = new SystemEventElasticsearchDocument
             {
@@ -282,7 +285,7 @@ namespace SystemEvents.Controllers
                 Level = model.Level.ToString(),
                 TargetKey = model.TargetKey,
                 Message = $"{model.Message} by {model.Sender}",
-                Tags = model.Tags.ToArray(),
+                Tags = hashset.ToArray(),
                 Sender = model.Sender,
                 Timestamp = eventTimestamp,
                 Endtime = eventTimestamp

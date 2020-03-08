@@ -7,7 +7,7 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Compact;
 
-namespace SystemEvents
+namespace SlackAppBackend
 {
     public class Program
     {

@@ -62,12 +62,12 @@ namespace SlackAppBackend.Controllers
         {
             if(request == null)
             {
-                throw new ArgumentNullException(nameof(request));
+                return BadRequest($"`{nameof(request)}` can not be null");
             }
 
             if (string.IsNullOrWhiteSpace(request.text))
             {
-                throw new ArgumentException($"{nameof(request.text)} can not be null or whitespace");
+                return BadRequest($"{nameof(request.text)} can not be null or whitespace");
             }
 
             var command = GetSlackCommand(request.text);
