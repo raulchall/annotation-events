@@ -72,7 +72,8 @@ namespace SlackAppBackend
             {
                 client.BaseAddress = configuration.SystemEventServiceUri;
             });
-
+            
+            services.AddSingleton<ISlackModalTemplateBuilder, SlackModalTemplateBuilder>();
             services.AddSingleton<IMonitoredSystemEventServiceClient, MonitoredSystemEventServiceClient>();
           
             services.AddHttpClient<SlackApiService>();

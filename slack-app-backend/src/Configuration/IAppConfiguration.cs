@@ -9,5 +9,9 @@ namespace SlackAppBackend.Configuration
         string SlackBotUserOAuthAccessToken { get; }
 
         string SlackSignedSecret { get; }
+
+        bool ShowCustomCategory { get; }
+
+        bool ShowPredefinedCategory { get; }
     }
 }

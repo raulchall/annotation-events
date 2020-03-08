@@ -3,6 +3,7 @@ categories:
     description: Allow all events
   - name: Adhoc
     description: Adhoc events
+    slack_app: true
   - name: Database Migration
     description: Database migration events
     level: critical

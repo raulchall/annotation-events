@@ -78,6 +78,9 @@ namespace SystemEvents.Api.Client.CSharp.Contracts
         [Newtonsoft.Json.JsonProperty("level", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public Level? Level { get; set; }
     
+        [Newtonsoft.Json.JsonProperty("slackApp", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public bool SlackApp { get; set; }
+    
         public string ToJson() 
         {
             return Newtonsoft.Json.JsonConvert.SerializeObject(this);
@@ -231,7 +234,7 @@ namespace SystemEvents.Api.Client.CSharp.Contracts
         }
     
     }
-    
+
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "13.2.5.0 (NJsonSchema v10.1.7.0 (Newtonsoft.Json v12.0.0.0))")]
     public partial class FileResponse : System.IDisposable
     {

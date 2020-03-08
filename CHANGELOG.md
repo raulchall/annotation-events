@@ -1,7 +1,7 @@
 # Ideas
 - Add more notification channels (VictorOps, Pager Duty)
 
-# Unreleased
+# v5.8.0-alpha (03/08/2020)
 ## Added
 - Slack App support 
 - All category notification channel subscription

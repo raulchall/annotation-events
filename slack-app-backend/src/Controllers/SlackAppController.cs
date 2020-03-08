@@ -22,32 +22,22 @@ namespace SlackAppBackend.Controllers
         private readonly ILogger<SlackAppController> _logger;
         private readonly SlackApiService _slackApiService;
         private readonly IMonitoredSystemEventServiceClient _systemEventClient;
+        private readonly ISlackModalTemplateBuilder _slackModalTemplateBuilder;
 
         public SlackAppController(
             ILogger<SlackAppController> logger,
             SlackApiService slackApiService,
-            IMonitoredSystemEventServiceClient systemEventClient)
+            IMonitoredSystemEventServiceClient systemEventClient,
+            ISlackModalTemplateBuilder slackModalTemplateBuilder)
         {
-            _logger                 = logger ?? throw new ArgumentNullException(nameof(logger));
-            _slackApiService        = slackApiService ?? throw new ArgumentNullException(nameof(slackApiService));
-            _systemEventClient      = systemEventClient ?? throw new ArgumentNullException(nameof(systemEventClient));
-        }
-
-        /// <summary>
-        /// Get Modal template
-        /// </summary>
-        /// <returns>
-        ///   <seealso cref="Task{ActionResult}"/>
-        /// </returns>
-        [HttpGet]
-        [Route("slack/template")]
-        public ActionResult GetModalTemplate(CancellationToken cancellationToken)
-        {
-            // var view = SlackModalTemplate.GetDialogTemplateWithCategories(
-            //     _advanceConfiguration.Categories.Where(c => c.Name != "*").ToList());
-
-            // return Ok(view);
-            return Ok();
+            _logger                    = logger 
+                                            ?? throw new ArgumentNullException(nameof(logger));
+            _slackApiService           = slackApiService 
+                                            ?? throw new ArgumentNullException(nameof(slackApiService));
+            _systemEventClient         = systemEventClient 
+                                            ?? throw new ArgumentNullException(nameof(systemEventClient));
+            _slackModalTemplateBuilder = slackModalTemplateBuilder 
+                                            ?? throw new ArgumentNullException(nameof(slackModalTemplateBuilder));
         }
 
         /// <summary>
@@ -81,8 +71,8 @@ namespace SlackAppBackend.Controllers
                 case SlackCommand.Create:
                     var categories = await _systemEventClient.CategoryAllGetAsync();
 
-                    var view = SlackModalTemplate.GetDialogTemplateWithCategories(
-                        categories.Where(c => c.Name != "*").ToList());
+                    var view = _slackModalTemplateBuilder.GetDialogTemplateWithCategories(
+                        categories.Where(c => c.Name != "*" && c.SlackApp).ToList());
 
                     var response = await _slackApiService.OpenDialogAsync(new OpenSlackModalRequest
                     {

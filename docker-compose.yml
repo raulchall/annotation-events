@@ -2,7 +2,7 @@ version: '3.7'
 services:
   slack-backend:
     container_name: slack-backend
-    image: raulchall/system-events-slack:latest
+    image: raulchall/system-events-slack-backend:latest
     build:
       context: slack-app-backend
       dockerfile: src/Dockerfile

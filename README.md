@@ -228,6 +228,21 @@ Supported Notification Channels:
 - [Slack Webhooks](https://api.slack.com/messaging/webhooks)
 - [AWS Simple Notification Service (Sns)](https://aws.amazon.com/sns/?whats-new-cards.sort-by=item.additionalFields.postDateTime&whats-new-cards.sort-order=desc)
 
+# Creating events from slack
+
+You can optionally deploy the [Slack App Backend](slack-app-backend/README.md) to make it easier for developers to report events. By default all `categories` on the Advance Configuration are not eligible to be created from the slack app, use the `slack_app` flag to enable it.
+
+On your config.yml
+
+```
+categories:
+  - name: '*'
+    description: Allow all events
+  - name: Adhoc
+    description: Adhoc events
+    slack_app: true  # Allow users to create Adhoc category from Slack App
+```
+
 # Running in Production
 
 Checklist

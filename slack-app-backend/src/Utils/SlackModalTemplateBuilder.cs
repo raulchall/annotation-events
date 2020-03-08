@@ -1,33 +1,66 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
+using SlackAppBackend.Configuration;
+using SlackAppBackend.Utils.Interfaces;
 using SystemEvents.Api.Client.CSharp.Contracts;
 
-namespace SlackAppBackend.Models.Slack
+namespace SlackAppBackend.Utils
 {
-    public static class SlackModalTemplate
+    public class SlackModalTemplateBuilder : ISlackModalTemplateBuilder
     {
-        public static string GetDialogTemplateWithCategories(List<Category> categories)
+        private readonly IAppConfiguration _configuration;
+
+        public SlackModalTemplateBuilder(IAppConfiguration configuration)
         {
-            var categorySelect = "";
-            if (categories == null || categories.Count == 0)
-            {
-                return _newSystemEventModalTemplate.Replace("<CATEGORY_SELECT>", categorySelect);
-            }
-
-            var sb = new StringBuilder();
-            for (int i = 0; i < categories.Count; i++)
-            {
-                sb.Append(_categoryOptionTemplate.Replace("<CATEGORY_NAME>", categories[i].Name));
-                
-                if (i < categories.Count - 1)
-                {
-                    sb.AppendLine(",");
-                }
-            }
-
-            categorySelect = _categorySelectTemplate.Replace("<CATEGORY_OPTIONS>", sb.ToString());
-            return _newSystemEventModalTemplate.Replace("<CATEGORY_SELECT>", categorySelect);
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
+
+        public string GetDialogTemplateWithCategories(List<Category> categories = null)
+        {
+
+            var templateSb = new StringBuilder(_newSystemEventModalTemplate);
+
+            var categorySelect = String.Empty;
+            if (_configuration.ShowPredefinedCategory && categories != null)
+            {
+                var sb = new StringBuilder();
+                for (int i = 0; i < categories.Count; i++)
+                {
+                    sb.Append(_categoryOptionTemplate.Replace("<CATEGORY_NAME>", categories[i].Name));
+                    
+                    if (i < categories.Count - 1)
+                    {
+                        sb.AppendLine(",");
+                    }
+                }
+
+                categorySelect = _categorySelectTemplate.Replace("<CATEGORY_OPTIONS>", sb.ToString());
+            }
+
+            templateSb.Replace("<CATEGORY_SELECT>", categorySelect);
+
+            if (_configuration.ShowCustomCategory)
+            {
+                templateSb.Replace("<CUSTOM_CATEGORY_INPUT>", _customCategoryInputTemplate);
+            }
+            else 
+            {
+                templateSb.Replace("<CUSTOM_CATEGORY_INPUT>", String.Empty);
+            }
+
+            if (_configuration.ShowPredefinedCategory && _configuration.ShowCustomCategory)
+            {
+                templateSb.Replace("<MULTIPLE_CATEGORY_INPUT_HELP>", _multipleCategoryInputHelp);
+            }
+            else 
+            {
+                templateSb.Replace("<MULTIPLE_CATEGORY_INPUT_HELP>", String.Empty);
+            }
+            
+            return templateSb.ToString();
+        }
+
 
         private const string _categoryOptionTemplate = @"{
             ""text"": {
@@ -69,6 +102,37 @@ namespace SlackAppBackend.Models.Slack
             ]
         },";
 
+        private const string _multipleCategoryInputHelp = @"
+        {
+            ""type"": ""context"",
+            ""elements"": [
+                {
+                    ""type"": ""mrkdwn"",
+                    ""text"": ""Or enter your own category :point_down:""
+                }
+            ]
+        },";
+        
+        private const string _customCategoryInputTemplate = @"
+        {
+            ""block_id"": ""event_custom_category"",
+            ""type"": ""input"",
+            ""optional"": true,
+            ""element"": {
+                ""type"": ""plain_text_input"",
+                ""action_id"": ""custom_category"",
+                ""placeholder"": {
+                    ""type"": ""plain_text"",
+                    ""text"": ""Your custom category here...""
+                }
+            },
+            ""label"": {
+                ""type"": ""plain_text"",
+                ""text"": ""Custom Category"",
+                ""emoji"": true
+            }
+        },";
+        
         private const string _newSystemEventModalTemplate = @"{
             ""type"": ""modal"",
             ""title"": {
@@ -88,24 +152,8 @@ namespace SlackAppBackend.Models.Slack
             },
             ""blocks"": [
                 <CATEGORY_SELECT>
-                {
-                    ""block_id"": ""event_custom_category"",
-                    ""type"": ""input"",
-                    ""optional"": true,
-                    ""element"": {
-                        ""type"": ""plain_text_input"",
-                        ""action_id"": ""custom_category"",
-                        ""placeholder"": {
-                            ""type"": ""plain_text"",
-                            ""text"": ""Your custom category here...""
-                        }
-                    },
-                    ""label"": {
-                        ""type"": ""plain_text"",
-                        ""text"": ""Custom Category"",
-                        ""emoji"": true
-                    }
-                },
+                <MULTIPLE_CATEGORY_INPUT_HELP>
+                <CUSTOM_CATEGORY_INPUT>
                 {
                     ""type"": ""context"",
                     ""elements"": [
