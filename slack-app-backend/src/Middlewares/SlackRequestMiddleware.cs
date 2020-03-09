@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using SlackAppBackend.Configuration;
 
 namespace SlackAppBackend.Middlewares
@@ -12,6 +13,7 @@ namespace SlackAppBackend.Middlewares
     public class SlackRequestMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly ILogger<SlackRequestMiddleware> _logger;
         private readonly IAppConfiguration _configuration;
 
         private const string _slackRequestTimestampHeader = "X-Slack-Request-Timestamp";
@@ -19,15 +21,23 @@ namespace SlackAppBackend.Middlewares
 
         public SlackRequestMiddleware(
             RequestDelegate next,
+            ILogger<SlackRequestMiddleware> logger,
             IAppConfiguration configuration)
         {
             _next = next;
+            _logger = logger;
             _configuration = configuration;
         }
 
         public async Task Invoke(HttpContext context)
         {
             var request = context.Request;
+            
+            if (context.Request.Path.Equals("/health"))
+            {
+                await _next(context);
+                return;
+            }
 
             if (request.Method != "POST")
             {
