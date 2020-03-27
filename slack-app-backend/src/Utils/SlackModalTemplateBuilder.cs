@@ -212,6 +212,7 @@ namespace SlackAppBackend.Utils
                 {
                     ""block_id"": ""event_tags"",
                     ""type"": ""input"",
+                    ""optional"": ""true"",
                     ""element"": {
                         ""type"": ""plain_text_input"",
                         ""action_id"": ""tags"",
