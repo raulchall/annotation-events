@@ -1,5 +1,10 @@
-# Ideas
-- Add more notification channels (VictorOps, Pager Duty)
+Images released under this tags:
+
+- Slack App Backend for System Events 
+[raulchall/system-events-slack-backend:tagname](https://hub.docker.com/repository/docker/raulchall/system-events-slack-backend)
+
+- System Events Service
+[raulchall/system-events:tagname](https://hub.docker.com/repository/docker/raulchall/system-events)
 
 # v5.8.0-alpha (03/08/2020)
 ## Added
