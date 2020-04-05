@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>SystemEvents.Api.Client.CSharp</AssemblyName>
+    <RootNamespace>SystemEvents.Api.Client.CSharp</RootNamespace>
+    <GenerateCode>True</GenerateCode>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="NSwag.MSBuild" Version="13.2.5">
+      <PrivateAssets>All</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <Target Name="NSwag" BeforeTargets="PostBuildEvent" Condition="'$(GenerateCode)'=='True' ">
+    <Exec Command="$(NSwagExe_Core31) run nswag.json /variables:Configuration=$(Configuration)" />
+  </Target>
+</Project>

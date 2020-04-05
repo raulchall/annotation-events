@@ -21,8 +21,6 @@ namespace SystemEvents.Utils
         private const string _updateMethodName = "UpdateAsync";
         private const string _getMethodName = "GetAsync";
 
-        
-
         public PrometheusMonitoredElasticsearchClient(
             ILogger<PrometheusMonitoredElasticsearchClient> logger,
             IElasticsearchClientConfiguration elasticSearchClientconfiguration,
@@ -44,10 +42,18 @@ namespace SystemEvents.Utils
             {
                 indexName = _indexFactory.GetIndexName();
                 var result = await _esClient.GetAsync<SystemEventElasticsearchDocument>(
-                                            new GetRequest<SystemEventElasticsearchDocument>(indexName, documentId),
+                                            new GetRequest<SystemEventElasticsearchDocument>(
+                                                indexName, 
+                                                typeof(SystemEventElasticsearchDocument), 
+                                                documentId),
                                             cancellationToken: cancellationToken);
 
                 PostInvokeSuccess(latency, _clientName, _getMethodName, documentId, indexName);
+                if (result?.Source != null)
+                {
+                    result.Source.Id = result.Id;
+                }
+                
                 return result.Source;
             }
             catch (Exception ex)

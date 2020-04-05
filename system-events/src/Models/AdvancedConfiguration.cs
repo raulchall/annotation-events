@@ -20,6 +20,7 @@ namespace SystemEvents.Models
         public string Name { get; set; }
         public string Description { get; set; }
         public Level? Level { get; set; }
+        public bool SlackApp { get; set; }
     }
 
     public class CategorySubscription

@@ -1,5 +1,18 @@
 version: '3.7'
 services:
+  slack-backend:
+    container_name: slack-backend
+    image: raulchall/system-events-slack-backend:latest
+    build:
+      context: slack-app-backend
+      dockerfile: src/Dockerfile
+    env_file:
+      - slack-app-backend/src/envvars
+    networks:
+      - system-events
+    ports:
+      - "4390:80"
+
   system-events:
     container_name: system-events
     image: raulchall/system-events:latest
@@ -13,7 +26,7 @@ services:
     networks:
       - system-events
     ports:
-      - "80"
+      - "32791:80"
   
   grafana:
     image: grafana/grafana:6.6.0

@@ -1,4 +1,3 @@
-using Amazon.SimpleNotificationService;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -8,13 +7,15 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using Prometheus;
-using SystemEvents.Configuration;
-using SystemEvents.ServiceExtensions;
-using SystemEvents.Services;
-using SystemEvents.Utils;
-using SystemEvents.Utils.Interfaces;
+using SlackAppBackend.Configuration;
+using SlackAppBackend.Utils.Interfaces;
+using SlackAppBackend.Services;
+using SlackAppBackend.Utils;
+using SystemEvents.Api.Client.CSharp.Contracts;
+using SystemEvents.Api.Client.CSharp;
+using SlackAppBackend.Middlewares;
 
-namespace SystemEvents
+namespace SlackAppBackend
 {
     public class Startup
     {
@@ -43,6 +44,8 @@ namespace SystemEvents
             app.UseHttpMetrics();
 
             app.UseAuthorization();
+            
+            app.UseMiddleware<SlackRequestMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {
@@ -56,26 +59,26 @@ namespace SystemEvents
         public void ConfigureServices(IServiceCollection services)
         {
             var configuration = new AppConfiguration();
+
+            configuration.ValidateAppConfiguration();
             
             // Inject the configuration
             services.AddSingleton<IAppConfiguration>(provider => configuration);
-            services.AddSingleton<IElasticsearchClientConfiguration>(provider => configuration);
-            services.AddAdvanceConfiguration(configuration);
 
-            services.AddSingleton<IElasticsearchTimeStampFactory, ElasticsearchTimeStampFactory>();
-            services.AddElasticsearch(configuration);
-            services.AddSingleton<IElasticsearchIndexFactory, ElasticsearchIndexFactory>();
-            services.AddSingleton<IMonitoredElasticsearchClient, PrometheusMonitoredElasticsearchClient>();
-
-            // Inject Notification Channel Clients
-            if (!string.IsNullOrWhiteSpace(configuration.AdvanceConfigurationPath))
+            services.AddHttpClient<ISystemEventsClient, SystemEventsClient>((provider, client) =>
             {
-                services.AddHttpClient<SlackWebhookService>();
-                services.AddDefaultAWSOptions(Configuration.GetAWSOptions());
-                services.AddAWSService<IAmazonSimpleNotificationService>();
-                services.AddSingleton<IMonitoredAmazonSimpleNotificationService, MonitoredAmazonSimpleNotificationService>();
-                services.AddSingleton<ICategorySubscriptionNotifier, CategorySubscriptionNotifier>();
-            }
+                client.BaseAddress = configuration.SystemEventServiceUri;
+            });
+
+            services.AddHttpClient<ICategoriesClient, CategoriesClient>((provider, client) =>
+            {
+                client.BaseAddress = configuration.SystemEventServiceUri;
+            });
+            
+            services.AddSingleton<ISlackModalTemplateBuilder, SlackModalTemplateBuilder>();
+            services.AddSingleton<IMonitoredSystemEventServiceClient, MonitoredSystemEventServiceClient>();
+          
+            services.AddHttpClient<SlackApiService>();
 
             services.AddHealthChecks();
 
@@ -95,8 +98,8 @@ namespace SystemEvents
                 settings.PostProcess = document =>
                 {
                     document.Info.Version = "v1";
-                    document.Info.Title = "System Events API";
-                    document.Info.Description = "REST API for managing system events";
+                    document.Info.Title = "Slack App API Backend";
+                    document.Info.Description = "REST API for System Events Slack App";
                 };
             });
         }

@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -17,7 +15,7 @@ namespace SystemEvents.Utils
     {
         private readonly ILogger<CategorySubscriptionNotifier> _logger;
         private readonly IAdvanceConfiguration _advanceConfiguration;
-        private readonly SlackService _slackService;
+        private readonly SlackWebhookService _slackService;
         private readonly IMonitoredAmazonSimpleNotificationService _amazonSimpleNotificationService;
 
         private IDictionary<string, List<CategorySubscription>> _configurationToNotificationChannelMap;
@@ -25,14 +23,14 @@ namespace SystemEvents.Utils
         private const string _onEventCreateNotificationMessage = "New System Event Created";
         private const string _onEventStartedNotificationMessage = "New System Event Started";
         private const string _onEventFinishedNotificationMessage = "System Event Finished";
-
+        private const string _allCategoriesKey = "*";
         private const string _SystemName = "SystemEvents";
         private const string _SystemIcon = ":loudspeaker:";
 
         public CategorySubscriptionNotifier(
             ILogger<CategorySubscriptionNotifier> logger,
             IAdvanceConfiguration advanceConfiguration,
-            SlackService slackService,
+            SlackWebhookService slackService,
             IMonitoredAmazonSimpleNotificationService amazonSimpleNotificationService)
         {
             _logger                          = logger ?? 
@@ -70,32 +68,57 @@ namespace SystemEvents.Utils
 
         private async Task SendNotification(string notificationMessage, string category, SystemEventElasticsearchDocument document, CancellationToken cancellationToken)
         {
+            if (document == null)
+            {
+                throw new ArgumentNullException(nameof(document));
+            }
+
             if (string.IsNullOrWhiteSpace(category))
             {
-                return;
+                throw new ArgumentException($"The {nameof(category)} can not be null or whitespace");
             }
 
-            if (!_configurationToNotificationChannelMap.ContainsKey(category))
+            _logger.LogInformation($"Sending notification for category {category}");
+
+            var categorySubscriptions = new List<CategorySubscription>();
+
+            // If there are subscriptions to * then 
+            // send this notification to those channels.
+            if (_configurationToNotificationChannelMap.ContainsKey(_allCategoriesKey))
             {
-                return;
+                categorySubscriptions.AddRange(_configurationToNotificationChannelMap[_allCategoriesKey]);
             }
 
-            var categorySubscriptions = _configurationToNotificationChannelMap[category];
+            if (_configurationToNotificationChannelMap.ContainsKey(category))
+            {
+                categorySubscriptions.AddRange(_configurationToNotificationChannelMap[category]);
+            }
+
+            _logger.LogInformation($"Number of category subs {categorySubscriptions.Count}");
 
             foreach (var categorySubscription in categorySubscriptions)
             {
-                switch(categorySubscription.Type)
+                _logger.LogInformation($"categorySubscription.Type {categorySubscription.Type}");
+                try
                 {
-                    case NotificationChannelType.Slack:
-                        await SendSlackNotification(notificationMessage, categorySubscription, document, cancellationToken);
-                        break;
-                    case NotificationChannelType.Sns:
-                        await SendSnsNotification(notificationMessage, categorySubscription, document, cancellationToken);
-                        break;
-                    default:
-                        _logger.LogInformation(
-                            $"The provided notification channel {categorySubscription.Type} is not supported");
-                        break;
+                    switch(categorySubscription.Type)
+                    {
+                        case NotificationChannelType.Slack:
+                            await SendSlackNotification(notificationMessage, categorySubscription, document, cancellationToken);
+                            break;
+                        case NotificationChannelType.Sns:
+                            await SendSnsNotification(notificationMessage, categorySubscription, document, cancellationToken);
+                            break;
+                        default:
+                            _logger.LogInformation(
+                                $"The provided notification channel {categorySubscription.Type} is not supported");
+                            break;
+                    }
+                }
+                catch
+                {
+                    // Ignored so a failure in one channel does not 
+                    // stops the rest of the notifications from been sent.
                 }
             }
         }
@@ -119,7 +142,8 @@ namespace SystemEvents.Utils
                 .SetUserWithEmoji(_SystemName, _SystemIcon);
             
             message.AddAttachment(new Attachment()
-                .AddField("Event", document.Message, true)
+                .AddField("Event Id", document.Id, true)
+                .AddField("Message", document.Message, true)
                 .AddField("Target", document.TargetKey, true)
                 .AddField("Sender", document.Sender, true)
                 .AddField("Start Time", document.Timestamp, true)

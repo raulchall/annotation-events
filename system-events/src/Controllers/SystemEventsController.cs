@@ -4,12 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Threading;
 using SystemEvents.Models;
-using Nest;
-using SystemEvents.Configuration;
 using SystemEvents.Utils.Interfaces;
+using SystemEvents.Configuration;
+using Nest;
 using System.Collections.Generic;
 using System.Linq;
-using SystemEvents.Enums;
 
 namespace SystemEvents.Controllers
 {
@@ -40,6 +39,30 @@ namespace SystemEvents.Controllers
         }
 
         /// <summary>
+        /// Gets a system event by id
+        /// </summary>
+        /// <returns>
+        ///   <seealso cref="Task{ActionResult{SystemEventElasticsearchDocument}}"/>
+        /// </returns>
+        [HttpGet]
+        [Route("event")]
+        public async Task<ActionResult<SystemEventElasticsearchDocument>> GetEventById(string eventId, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(eventId))
+            {
+                return BadRequest($"{nameof(eventId)} can not be null or whitespace");
+            }
+
+            var result = await _esClient.GetAsync(eventId, cancellationToken);
+            if (result == null)
+            {
+                return BadRequest($"There is no event with id {eventId}");
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Creates a new system event
         /// </summary>
         /// <returns>
@@ -49,7 +72,7 @@ namespace SystemEvents.Controllers
         [Route("event")]
         public async Task<ActionResult<EventResponse>> Create([FromBody] EventRequestModel model, CancellationToken cancellationToken)
         {
-            if (!IsValid(model, out string reason))
+            if (!Validate(model, out string reason))
             {
                 return BadRequest($"Invalid request: {reason}");
             }
@@ -57,9 +80,7 @@ namespace SystemEvents.Controllers
             var response = await CreateSystemEvent(model, cancellationToken);
             if (!response.IsValid)
             {
-                _logger.LogDebug(response.DebugInformation);
-                _logger.LogError(response.OriginalException, "System event was not created");
-                return BadRequest("System event was not created");
+                throw new ArgumentException("System event was not created");
             }
 
             if (_categorySubscriptionNotifier == null)
@@ -75,9 +96,10 @@ namespace SystemEvents.Controllers
                 var document = await _esClient.GetAsync(response.Id, cancellationToken);
                 await _categorySubscriptionNotifier.OnEventCreated(model.Category, document, cancellationToken);
             }
-            catch
+            catch (Exception exception)
             {
                 // Ignore failure to send notification about system event
+                _logger.LogError(exception, $"Error sending notifications for event with id {response.Id}");
             }
 
             return Ok(new EventResponse{
@@ -96,7 +118,7 @@ namespace SystemEvents.Controllers
         [Route("event/start")]
         public async Task<ActionResult<EventResponse>> StartEvent([FromBody] EventRequestModel model, CancellationToken cancellationToken)
         {
-            if (!IsValid(model, out string reason))
+            if (!Validate(model, out string reason))
             {
                 return BadRequest($"Invalid request: {reason}");
             }
@@ -104,9 +126,7 @@ namespace SystemEvents.Controllers
             var response = await CreateSystemEvent(model, cancellationToken);
             if (!response.IsValid)
             {
-                _logger.LogDebug(response.DebugInformation);
-                _logger.LogError(response.OriginalException, "System event was not created");
-                return BadRequest("Unable to start a system event");
+                throw new ArgumentException("System event was not created");
             }
 
             if (_categorySubscriptionNotifier == null)
@@ -122,9 +142,10 @@ namespace SystemEvents.Controllers
                 var document = await _esClient.GetAsync(response.Id, cancellationToken);
                 await _categorySubscriptionNotifier.OnEventStarted(model.Category, document, cancellationToken);
             }
-            catch
+            catch (Exception exception)
             {
                 // Ignore failure to send notification about system event
+                _logger.LogError(exception, "Error sending notifications for event");
             }
 
             return Ok(new EventResponse{
@@ -154,8 +175,7 @@ namespace SystemEvents.Controllers
 
             if (!response.IsValid)
             {
-                _logger.LogError(response.OriginalException, "System event was not updated");
-                return BadRequest("Unable to update system event");
+                throw new ArgumentException("System event was not updated");
             }
 
             if (_categorySubscriptionNotifier == null)
@@ -169,44 +189,16 @@ namespace SystemEvents.Controllers
                 var document = await _esClient.GetAsync(response.Id, cancellationToken);
                 await _categorySubscriptionNotifier.OnEventFinished(document.Category, document, cancellationToken);
             }
-            catch
+            catch (Exception exception)
             {
                 // Ignore failure to send notification about system event
+                _logger.LogError(exception, "Error sending notifications for event");
             }
 
             return Ok();
         }
 
-        private Task<IIndexResponse> CreateSystemEvent(EventRequestModel model, CancellationToken cancellationToken)
-        {
-            if (model.Tags == null)
-            {
-                model.Tags = new List<string>();
-            }
-            
-            model.Tags.Add(model.Level.ToString());
-            model.Tags.Add(model.Level.ToString());
-
-            var remoteIpAddress = HttpContext.Connection.RemoteIpAddress;
-            var eventTimestamp = _timeStampFactory.GetTimestamp();
-
-            var systemEvent = new SystemEventElasticsearchDocument
-            {
-                Category = model.Category,
-                Level = model.Level.ToString(),
-                TargetKey = model.TargetKey,
-                Message = $"{model.Message} by {model.Sender}",
-                Tags = model.Tags,
-                Sender = model.Sender,
-                RemoteIpAddress = remoteIpAddress.ToString(),
-                Timestamp = eventTimestamp,
-                Endtime = eventTimestamp
-            };
-
-            return _esClient.IndexAsync(systemEvent, cancellationToken: cancellationToken);
-        }
-
-        private bool IsValid(EventRequestModel model, out string reason)
+        private bool Validate(EventRequestModel model, out string reason)
         {
             if (model == null)
             {
@@ -270,6 +262,36 @@ namespace SystemEvents.Controllers
             
             reason = null;
             return true;
+        }
+
+        private Task<IIndexResponse> CreateSystemEvent(EventRequestModel model, CancellationToken cancellationToken)
+        {
+            if (model.Tags == null)
+            {
+                model.Tags = new List<string>();
+            }
+            
+            model.Tags.Add(model.Level.ToString());
+            model.Tags.Add(model.Category);
+            model.Tags.Add(model.TargetKey);
+
+            // Remove duplicates
+            var hashset = model.Tags.ToHashSet();
+
+            var eventTimestamp = _timeStampFactory.GetTimestamp();
+            var systemEvent = new SystemEventElasticsearchDocument
+            {
+                Category = model.Category,
+                Level = model.Level.ToString(),
+                TargetKey = model.TargetKey,
+                Message = $"{model.Message} by {model.Sender}",
+                Tags = hashset.ToArray(),
+                Sender = model.Sender,
+                Timestamp = eventTimestamp,
+                Endtime = eventTimestamp
+            };
+
+            return _esClient.IndexAsync(systemEvent, cancellationToken: cancellationToken);
         }
     }
 }

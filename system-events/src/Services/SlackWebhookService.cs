@@ -9,15 +9,15 @@ using SystemEvents.Utils;
 
 namespace SystemEvents.Services
 {
-    public class SlackService : MonitoredClientBase
+    public class SlackWebhookService : MonitoredClientBase
     {
         private readonly HttpClient _client;
 
-        private const string _clientName = "SlackClient";
+        private const string _clientName = "SlackWebhookClient";
         private const string _sendMessageMethodName = "SendMessageAsync";
 
-        public SlackService(
-            ILogger<SlackService> logger,
+        public SlackWebhookService(
+            ILogger<SlackWebhookService> logger,
             HttpClient client) : base (logger)
         {
             client.BaseAddress = new Uri("https://hooks.slack.com/services/");

@@ -26,7 +26,7 @@ Use `POST /event/start` to indicate a system event just started. Use the returne
 
 Because the System Events service uses internally the NEST Client it's version matches the version of the NEST Client, to make it easier to pick the correct version that would work with your Elastic Search Deployment version. Read about [NEST Client versioning](https://github.com/elastic/elasticsearch-net#compatibility-matrix)
 
-# Starting simple 
+# How to run
 
 ## Local development using [Docker Compose](https://docs.docker.com/compose/)
 
@@ -49,6 +49,13 @@ Finally deploy the `System Events` service
 ```
 docker-compose up -d system-events
 ```
+
+## Using Docker
+
+```
+docker run --env-file path/to/envvars --volume path/to/config.yml:/config/config.yml --name system-events raulchall/system-events
+```
+
 ## Sending Events
 
 Find which port the `System Events` service is running
@@ -215,9 +222,33 @@ subscriptions:
     webhook_url: https://hooks.slack.com/services/Your/WebHook/Url
 ```
 
+You can create a subscription for all your categories by using the `*` category
+Ex.
+```
+subscriptions:
+  - type: slack
+    category: '*'
+    webhook_url: https://hooks.slack.com/services/Your/WebHook/Url
+```
+
 Supported Notification Channels:
 - [Slack Webhooks](https://api.slack.com/messaging/webhooks)
 - [AWS Simple Notification Service (Sns)](https://aws.amazon.com/sns/?whats-new-cards.sort-by=item.additionalFields.postDateTime&whats-new-cards.sort-order=desc)
+
+# Creating events from slack
+
+You can optionally deploy the [Slack App Backend](slack-app-backend/README.md) to make it easier for developers to report events. By default all `categories` on the Advance Configuration are not eligible to be created from the slack app, use the `slack_app` flag to enable it.
+
+On your config.yml
+
+```
+categories:
+  - name: '*'
+    description: Allow all events
+  - name: Adhoc
+    description: Adhoc events
+    slack_app: true  # Allow users to create Adhoc category from Slack App
+```
 
 # Running in Production
 
