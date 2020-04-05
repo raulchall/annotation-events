@@ -8,7 +8,7 @@ Before deploying the backend [create your slack app](https://api.slack.com/apps)
 You will need an oauth access token and a signed secret for configuring your backend service.
 
 ```
-docker run --env-file ./envvars raulchall/system-events-slack-backend:latest 
+docker run --env-file path/to/envvars raulchall/system-events-slack-backend:latest 
 ```
 
 ### Configuration
