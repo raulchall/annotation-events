@@ -11,7 +11,7 @@ services:
     networks:
       - system-events
     ports:
-      - "4390:80"
+      - "80"
 
   system-events:
     container_name: system-events
@@ -26,7 +26,7 @@ services:
     networks:
       - system-events
     ports:
-      - "32791:80"
+      - "80"
   
   grafana:
     image: grafana/grafana:6.6.0
