@@ -7,7 +7,7 @@
     <GenerateCode>True</GenerateCode>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="NSwag.MSBuild" Version="13.2.5">
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
